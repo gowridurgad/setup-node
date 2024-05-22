@@ -1,10 +1,26 @@
 name: architecturecaching
-on:
+on: 
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest-large
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '14'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+  restore:
+    runs-on: macos-latest
+    needs: build
     steps:
       - name: Check out code
         uses: actions/checkout@v4
