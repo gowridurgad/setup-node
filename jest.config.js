@@ -12,7 +12,14 @@ export default {
     '^.+\\.ts$': [
       'ts-jest',
       {
-        useESM: true
+        useESM: true,
+        tsconfig: {
+          module: 'NodeNext',
+          moduleResolution: 'NodeNext'
+        },
+        diagnostics: {
+          ignoreCodes: [151002]
+        }
       }
     ]
   },

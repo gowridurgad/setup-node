@@ -11,6 +11,8 @@ import {getNodejsDistribution} from './distributions/installer-factory.js';
 import {getNodeVersionFromFile, printEnvDetailsAndSetOutput} from './util.js';
 import {State} from './constants.js';
 
+const actionPath = process.env.GITHUB_ACTION_PATH ?? process.cwd();
+
 export async function run() {
   try {
     //
@@ -87,7 +89,7 @@ export async function run() {
       }
     }
 
-    const matchersPath = path.join(__dirname, '../..', '.github');
+  const matchersPath = path.join(actionPath, '.github');
     core.info(`##[add-matcher]${path.join(matchersPath, 'tsc.json')}`);
     core.info(
       `##[add-matcher]${path.join(matchersPath, 'eslint-stylish.json')}`

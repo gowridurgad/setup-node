@@ -96634,6 +96634,7 @@ var external_assert_ = __nccwpck_require__(42613);
 
 
 
+const actionPath = process.env.GITHUB_ACTION_PATH ?? process.cwd();
 class BaseDistribution {
     nodeInfo;
     httpClient;
@@ -96808,8 +96809,8 @@ class BaseDistribution {
                 extPath = await tool_cache.extractZip(renamedArchive);
             }
             else {
-                const _7zPath = __nccwpck_require__.ab + "7zr.exe";
-                extPath = await tool_cache.extract7z(downloadPath, undefined, __nccwpck_require__.ab + "7zr.exe");
+                const _7zPath = external_path_.join(actionPath, 'externals', '7zr.exe');
+                extPath = await tool_cache.extract7z(downloadPath, undefined, _7zPath);
             }
             // 7z extracts to folder matching file name
             const nestedPath = external_path_.join(extPath, external_path_.basename(info.fileName, extension));
@@ -97177,6 +97178,7 @@ function getNodejsDistribution(installerOptions) {
 
 
 
+const main_actionPath = process.env.GITHUB_ACTION_PATH ?? process.cwd();
 async function run() {
     try {
         //
@@ -97238,7 +97240,7 @@ async function run() {
                 }
             }
         }
-        const matchersPath = external_path_.join(__dirname, '../..', '.github');
+        const matchersPath = external_path_.join(main_actionPath, '.github');
         core.info(`##[add-matcher]${external_path_.join(matchersPath, 'tsc.json')}`);
         core.info(`##[add-matcher]${external_path_.join(matchersPath, 'eslint-stylish.json')}`);
         core.info(`##[add-matcher]${external_path_.join(matchersPath, 'eslint-compact.json')}`);
