@@ -11,7 +11,9 @@ import * as path from 'path';
 import os from 'os';
 import fs from 'fs';
 
-import {NodeInputs, INodeVersion, INodeVersionInfo} from './base-models';
+import {NodeInputs, INodeVersion, INodeVersionInfo} from './base-models.js';
+
+const actionPath = process.env.GITHUB_ACTION_PATH ?? process.cwd();
 
 export default abstract class BaseDistribution {
   protected httpClient: hc.HttpClient;
@@ -260,7 +262,7 @@ export default abstract class BaseDistribution {
         fs.renameSync(downloadPath, renamedArchive);
         extPath = await tc.extractZip(renamedArchive);
       } else {
-        const _7zPath = path.join(__dirname, '../..', 'externals', '7zr.exe');
+        const _7zPath = path.join(actionPath, 'externals', '7zr.exe');
         extPath = await tc.extract7z(downloadPath, undefined, _7zPath);
       }
       // 7z extracts to folder matching file name
