@@ -89,7 +89,7 @@ export async function run() {
       }
     }
 
-  const matchersPath = path.join(actionPath, '.github');
+    const matchersPath = path.join(actionPath, '.github');
     core.info(`##[add-matcher]${path.join(matchersPath, 'tsc.json')}`);
     core.info(
       `##[add-matcher]${path.join(matchersPath, 'eslint-stylish.json')}`

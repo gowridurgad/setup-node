@@ -262,7 +262,7 @@ export default abstract class BaseDistribution {
         fs.renameSync(downloadPath, renamedArchive);
         extPath = await tc.extractZip(renamedArchive);
       } else {
-  const _7zPath = path.join(actionPath, 'externals', '7zr.exe');
+        const _7zPath = path.join(actionPath, 'externals', '7zr.exe');
         extPath = await tc.extract7z(downloadPath, undefined, _7zPath);
       }
       // 7z extracts to folder matching file name
