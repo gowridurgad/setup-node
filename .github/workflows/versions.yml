@@ -181,7 +181,7 @@ jobs:
         with:
           node-version-file: '__tests__/data/package-dev-engines.json'
       - name: Verify node
-        run: __tests__/verify-node.sh 24
+        run: __tests__/verify-node.sh 20
 
   version-file-volta:
     runs-on: ${{ matrix.os }}
