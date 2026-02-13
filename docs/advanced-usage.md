@@ -108,7 +108,7 @@ When using the `package.json` input, the action will look in the following field
   "devEngines": {
     "runtime": {
       "name": "node",
-      "version": "^20.10"
+      "version": "^24.13.0"
     }
   }
 }
