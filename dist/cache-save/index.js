@@ -71933,7 +71933,7 @@ async function getToolVersion(tool, options) {
         }
         return stdout.trim();
     }
-    catch (err) {
+    catch {
         return '';
     }
 }
