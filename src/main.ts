@@ -3,13 +3,15 @@ import * as core from '@actions/core';
 import os from 'os';
 import fs from 'fs';
 
-import * as auth from './authutil';
+import * as auth from './authutil.js';
 import * as path from 'path';
-import {restoreCache} from './cache-restore';
-import {isCacheFeatureAvailable} from './cache-utils';
-import {getNodejsDistribution} from './distributions/installer-factory';
-import {getNodeVersionFromFile, printEnvDetailsAndSetOutput} from './util';
-import {State} from './constants';
+import {restoreCache} from './cache-restore.js';
+import {isCacheFeatureAvailable} from './cache-utils.js';
+import {getNodejsDistribution} from './distributions/installer-factory.js';
+import {getNodeVersionFromFile, printEnvDetailsAndSetOutput} from './util.js';
+import {State} from './constants.js';
+
+const actionPath = process.env.GITHUB_ACTION_PATH ?? process.cwd();
 
 export async function run() {
   try {
@@ -87,7 +89,7 @@ export async function run() {
       }
     }
 
-    const matchersPath = path.join(__dirname, '../..', '.github');
+    const matchersPath = path.join(actionPath, '.github');
     core.info(`##[add-matcher]${path.join(matchersPath, 'tsc.json')}`);
     core.info(
       `##[add-matcher]${path.join(matchersPath, 'eslint-stylish.json')}`
