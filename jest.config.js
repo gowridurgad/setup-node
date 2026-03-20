@@ -5,7 +5,10 @@ module.exports = {
   testMatch: ['**/*.test.ts'],
   testRunner: 'jest-circus/runner',
   transform: {
-    '^.+\\.ts$': 'ts-jest'
+    '^.+\\.[tj]s$': 'ts-jest'
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@octokit/core|@octokit/auth-token|@octokit/endpoint|@octokit/graphql|@octokit/plugin-paginate-rest|@octokit/plugin-rest-endpoint-methods|@octokit/request-error|@octokit/request|universal-user-agent|before-after-hook)/)'
+  ],
   verbose: true
 }
