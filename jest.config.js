@@ -5,7 +5,17 @@ module.exports = {
   testMatch: ['**/*.test.ts'],
   testRunner: 'jest-circus/runner',
   transform: {
-    '^.+\\.ts$': 'ts-jest'
+    '^.+\\.[tj]s$': [
+      'ts-jest',
+      {
+        // Override module to CommonJS for test compilation: the source tsconfig targets
+        // ESNext (for ncc bundling), but Jest's CJS loader requires CommonJS output.
+        tsconfig: {
+          module: 'CommonJS',
+          moduleResolution: 'node'
+        }
+      }
+    ]
   },
   verbose: true
 }
