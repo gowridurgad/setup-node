@@ -18,8 +18,17 @@ export function configAuthentication(registryUrl: string) {
 
 function writeRegistryToFile(registryUrl: string, fileLocation: string) {
   let scope: string = core.getInput('scope');
-  if (!scope && registryUrl.indexOf('npm.pkg.github.com') > -1) {
-    scope = new Context().repo.owner;
+  if (!scope) {
+    const normalizedUrl = registryUrl.includes('://')
+      ? registryUrl
+      : `https://${registryUrl}`;
+    try {
+      if (new URL(normalizedUrl).hostname === 'npm.pkg.github.com') {
+        scope = new Context().repo.owner;
+      }
+    } catch {
+      // If URL parsing fails, skip auto-scoping
+    }
   }
   if (scope && scope[0] != '@') {
     scope = '@' + scope;

@@ -51705,8 +51705,18 @@ function configAuthentication(registryUrl) {
 }
 function writeRegistryToFile(registryUrl, fileLocation) {
     let scope = core.getInput('scope');
-    if (!scope && registryUrl.indexOf('npm.pkg.github.com') > -1) {
-        scope = new context_1.Context().repo.owner;
+    if (!scope) {
+        const normalizedUrl = registryUrl.includes('://')
+            ? registryUrl
+            : `https://${registryUrl}`;
+        try {
+            if (new URL(normalizedUrl).hostname === 'npm.pkg.github.com') {
+                scope = new context_1.Context().repo.owner;
+            }
+        }
+        catch {
+            // If URL parsing fails, skip auto-scoping
+        }
     }
     if (scope && scope[0] != '@') {
         scope = '@' + scope;
