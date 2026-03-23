@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as core from '@actions/core';
-import {Context} from '@actions/github/lib/context';
 
 export function configAuthentication(registryUrl: string) {
   const npmrc: string = path.resolve(
@@ -24,7 +23,8 @@ function writeRegistryToFile(registryUrl: string, fileLocation: string) {
       : `https://${registryUrl}`;
     try {
       if (new URL(normalizedUrl).hostname === 'npm.pkg.github.com') {
-        scope = new Context().repo.owner;
+        // github.context.repo.owner reads GITHUB_REPOSITORY and splits on '/'
+        scope = (process.env['GITHUB_REPOSITORY'] ?? '/').split('/')[0];
       }
     } catch {
       // If URL parsing fails, skip auto-scoping

@@ -6884,69 +6884,6 @@ class ExecState extends events.EventEmitter {
 
 /***/ }),
 
-/***/ 51648:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Context = void 0;
-const fs_1 = __nccwpck_require__(79896);
-const os_1 = __nccwpck_require__(70857);
-class Context {
-    /**
-     * Hydrate the context from the environment
-     */
-    constructor() {
-        var _a, _b, _c;
-        this.payload = {};
-        if (process.env.GITHUB_EVENT_PATH) {
-            if ((0, fs_1.existsSync)(process.env.GITHUB_EVENT_PATH)) {
-                this.payload = JSON.parse((0, fs_1.readFileSync)(process.env.GITHUB_EVENT_PATH, { encoding: 'utf8' }));
-            }
-            else {
-                const path = process.env.GITHUB_EVENT_PATH;
-                process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${os_1.EOL}`);
-            }
-        }
-        this.eventName = process.env.GITHUB_EVENT_NAME;
-        this.sha = process.env.GITHUB_SHA;
-        this.ref = process.env.GITHUB_REF;
-        this.workflow = process.env.GITHUB_WORKFLOW;
-        this.action = process.env.GITHUB_ACTION;
-        this.actor = process.env.GITHUB_ACTOR;
-        this.job = process.env.GITHUB_JOB;
-        this.runAttempt = parseInt(process.env.GITHUB_RUN_ATTEMPT, 10);
-        this.runNumber = parseInt(process.env.GITHUB_RUN_NUMBER, 10);
-        this.runId = parseInt(process.env.GITHUB_RUN_ID, 10);
-        this.apiUrl = (_a = process.env.GITHUB_API_URL) !== null && _a !== void 0 ? _a : `https://api.github.com`;
-        this.serverUrl = (_b = process.env.GITHUB_SERVER_URL) !== null && _b !== void 0 ? _b : `https://github.com`;
-        this.graphqlUrl =
-            (_c = process.env.GITHUB_GRAPHQL_URL) !== null && _c !== void 0 ? _c : `https://api.github.com/graphql`;
-    }
-    get issue() {
-        const payload = this.payload;
-        return Object.assign(Object.assign({}, this.repo), { number: (payload.issue || payload.pull_request || payload).number });
-    }
-    get repo() {
-        if (process.env.GITHUB_REPOSITORY) {
-            const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
-            return { owner, repo };
-        }
-        if (this.payload.repository) {
-            return {
-                owner: this.payload.repository.owner.login,
-                repo: this.payload.repository.name
-            };
-        }
-        throw new Error("context.repo requires a GITHUB_REPOSITORY environment variable like 'owner/repo'");
-    }
-}
-exports.Context = Context;
-//# sourceMappingURL=context.js.map
-
-/***/ }),
-
 /***/ 47206:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -51651,1548 +51588,6 @@ module.exports = {
 
 /***/ }),
 
-/***/ 98789:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.configAuthentication = configAuthentication;
-const fs = __importStar(__nccwpck_require__(79896));
-const os = __importStar(__nccwpck_require__(70857));
-const path = __importStar(__nccwpck_require__(16928));
-const core = __importStar(__nccwpck_require__(37484));
-const context_1 = __nccwpck_require__(51648);
-function configAuthentication(registryUrl) {
-    const npmrc = path.resolve(process.env['RUNNER_TEMP'] || process.cwd(), '.npmrc');
-    if (!registryUrl.endsWith('/')) {
-        registryUrl += '/';
-    }
-    writeRegistryToFile(registryUrl, npmrc);
-}
-function writeRegistryToFile(registryUrl, fileLocation) {
-    let scope = core.getInput('scope');
-    if (!scope) {
-        const normalizedUrl = registryUrl.includes('://')
-            ? registryUrl
-            : `https://${registryUrl}`;
-        try {
-            if (new URL(normalizedUrl).hostname === 'npm.pkg.github.com') {
-                scope = new context_1.Context().repo.owner;
-            }
-        }
-        catch {
-            // If URL parsing fails, skip auto-scoping
-        }
-    }
-    if (scope && scope[0] != '@') {
-        scope = '@' + scope;
-    }
-    if (scope) {
-        scope = scope.toLowerCase() + ':';
-    }
-    core.debug(`Setting auth in ${fileLocation}`);
-    let newContents = '';
-    if (fs.existsSync(fileLocation)) {
-        const curContents = fs.readFileSync(fileLocation, 'utf8');
-        curContents.split(os.EOL).forEach((line) => {
-            // Add current contents unless they are setting the registry
-            if (!line.toLowerCase().startsWith(`${scope}registry`)) {
-                newContents += line + os.EOL;
-            }
-        });
-    }
-    // Remove http: or https: from front of registry.
-    const authString = registryUrl.replace(/(^\w+:|^)/, '') + ':_authToken=${NODE_AUTH_TOKEN}';
-    const registryString = `${scope}registry=${registryUrl}`;
-    newContents += `${authString}${os.EOL}${registryString}`;
-    fs.writeFileSync(fileLocation, newContents);
-    core.exportVariable('NPM_CONFIG_USERCONFIG', fileLocation);
-    // Export empty node_auth_token if didn't exist so npm doesn't complain about not being able to find it
-    core.exportVariable('NODE_AUTH_TOKEN', process.env.NODE_AUTH_TOKEN || 'XXXXX-XXXXX-XXXXX-XXXXX');
-}
-
-
-/***/ }),
-
-/***/ 44326:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.restoreCache = void 0;
-const cache = __importStar(__nccwpck_require__(5116));
-const core = __importStar(__nccwpck_require__(37484));
-const glob = __importStar(__nccwpck_require__(47206));
-const path_1 = __importDefault(__nccwpck_require__(16928));
-const fs_1 = __importDefault(__nccwpck_require__(79896));
-const os_1 = __importDefault(__nccwpck_require__(70857));
-const constants_1 = __nccwpck_require__(27242);
-const cache_utils_1 = __nccwpck_require__(4673);
-const restoreCache = async (packageManager, cacheDependencyPath) => {
-    const packageManagerInfo = await (0, cache_utils_1.getPackageManagerInfo)(packageManager);
-    if (!packageManagerInfo) {
-        throw new Error(`Caching for '${packageManager}' is not supported`);
-    }
-    const platform = process.env.RUNNER_OS;
-    const arch = os_1.default.arch();
-    const cachePaths = await (0, cache_utils_1.getCacheDirectories)(packageManagerInfo, cacheDependencyPath);
-    core.saveState(constants_1.State.CachePaths, cachePaths);
-    const lockFilePath = cacheDependencyPath
-        ? cacheDependencyPath
-        : findLockFile(packageManagerInfo);
-    const fileHash = await glob.hashFiles(lockFilePath);
-    if (!fileHash) {
-        throw new Error('Some specified paths were not resolved, unable to cache dependencies.');
-    }
-    const keyPrefix = `node-cache-${platform}-${arch}-${packageManager}`;
-    const primaryKey = `${keyPrefix}-${fileHash}`;
-    core.debug(`primary key is ${primaryKey}`);
-    core.saveState(constants_1.State.CachePrimaryKey, primaryKey);
-    const isManagedByYarnBerry = await (0, cache_utils_1.repoHasYarnBerryManagedDependencies)(packageManagerInfo, cacheDependencyPath);
-    let cacheKey;
-    if (isManagedByYarnBerry) {
-        core.info('All dependencies are managed locally by yarn3, the previous cache can be used');
-        cacheKey = await cache.restoreCache(cachePaths, primaryKey, [keyPrefix]);
-    }
-    else {
-        cacheKey = await cache.restoreCache(cachePaths, primaryKey);
-    }
-    core.setOutput('cache-hit', Boolean(cacheKey));
-    if (!cacheKey) {
-        core.info(`${packageManager} cache is not found`);
-        return;
-    }
-    core.saveState(constants_1.State.CacheMatchedKey, cacheKey);
-    core.info(`Cache restored from key: ${cacheKey}`);
-};
-exports.restoreCache = restoreCache;
-const findLockFile = (packageManager) => {
-    const lockFiles = packageManager.lockFilePatterns;
-    const workspace = process.env.GITHUB_WORKSPACE;
-    const rootContent = fs_1.default.readdirSync(workspace);
-    const lockFile = lockFiles.find(item => rootContent.includes(item));
-    if (!lockFile) {
-        throw new Error(`Dependencies lock file is not found in ${workspace}. Supported file patterns: ${lockFiles.toString()}`);
-    }
-    return path_1.default.join(workspace, lockFile);
-};
-
-
-/***/ }),
-
-/***/ 4673:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.repoHasYarnBerryManagedDependencies = exports.getCacheDirectories = exports.resetProjectDirectoriesMemoized = exports.getPackageManagerInfo = exports.getCommandOutputNotEmpty = exports.getCommandOutput = exports.supportedPackageManagers = void 0;
-exports.isGhes = isGhes;
-exports.isCacheFeatureAvailable = isCacheFeatureAvailable;
-const core = __importStar(__nccwpck_require__(37484));
-const exec = __importStar(__nccwpck_require__(95236));
-const cache = __importStar(__nccwpck_require__(5116));
-const glob = __importStar(__nccwpck_require__(47206));
-const path_1 = __importDefault(__nccwpck_require__(16928));
-const fs_1 = __importDefault(__nccwpck_require__(79896));
-const util_1 = __nccwpck_require__(54527);
-exports.supportedPackageManagers = {
-    npm: {
-        name: 'npm',
-        lockFilePatterns: ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock'],
-        getCacheFolderPath: () => (0, exports.getCommandOutputNotEmpty)('npm config get cache', 'Could not get npm cache folder path')
-    },
-    pnpm: {
-        name: 'pnpm',
-        lockFilePatterns: ['pnpm-lock.yaml'],
-        getCacheFolderPath: () => (0, exports.getCommandOutputNotEmpty)('pnpm store path --silent', 'Could not get pnpm cache folder path')
-    },
-    yarn: {
-        name: 'yarn',
-        lockFilePatterns: ['yarn.lock'],
-        getCacheFolderPath: async (projectDir) => {
-            const yarnVersion = await (0, exports.getCommandOutputNotEmpty)(`yarn --version`, 'Could not retrieve version of yarn', projectDir);
-            core.debug(`Consumed yarn version is ${yarnVersion} (working dir: "${projectDir || ''}")`);
-            const stdOut = yarnVersion.startsWith('1.')
-                ? await (0, exports.getCommandOutput)('yarn cache dir', projectDir)
-                : await (0, exports.getCommandOutput)('yarn config get cacheFolder', projectDir);
-            if (!stdOut) {
-                throw new Error(`Could not get yarn cache folder path for ${projectDir}`);
-            }
-            return stdOut;
-        }
-    }
-};
-const getCommandOutput = async (toolCommand, cwd) => {
-    let { stdout, stderr, exitCode } = await exec.getExecOutput(toolCommand, undefined, { ignoreReturnCode: true, ...(cwd && { cwd }) });
-    if (exitCode) {
-        stderr = !stderr.trim()
-            ? `The '${toolCommand}' command failed with exit code: ${exitCode}`
-            : stderr;
-        throw new Error(stderr);
-    }
-    return stdout.trim();
-};
-exports.getCommandOutput = getCommandOutput;
-const getCommandOutputNotEmpty = async (toolCommand, error, cwd) => {
-    const stdOut = (0, exports.getCommandOutput)(toolCommand, cwd);
-    if (!stdOut) {
-        throw new Error(error);
-    }
-    return stdOut;
-};
-exports.getCommandOutputNotEmpty = getCommandOutputNotEmpty;
-const getPackageManagerInfo = async (packageManager) => {
-    if (packageManager === 'npm') {
-        return exports.supportedPackageManagers.npm;
-    }
-    else if (packageManager === 'pnpm') {
-        return exports.supportedPackageManagers.pnpm;
-    }
-    else if (packageManager === 'yarn') {
-        return exports.supportedPackageManagers.yarn;
-    }
-    else {
-        return null;
-    }
-};
-exports.getPackageManagerInfo = getPackageManagerInfo;
-/**
- * getProjectDirectoriesFromCacheDependencyPath is called twice during `restoreCache`
- *  - first through `getCacheDirectories`
- *  - second from `repoHasYarn3ManagedCache`
- *
- *  it contains expensive IO operation and thus should be memoized
- */
-let projectDirectoriesMemoized = null;
-/**
- * unit test must reset memoized variables
- */
-const resetProjectDirectoriesMemoized = () => (projectDirectoriesMemoized = null);
-exports.resetProjectDirectoriesMemoized = resetProjectDirectoriesMemoized;
-/**
- * Expands (converts) the string input `cache-dependency-path` to list of directories that
- * may be project roots
- * @param cacheDependencyPath - either a single string or multiline string with possible glob patterns
- *                              expected to be the result of `core.getInput('cache-dependency-path')`
- * @return list of directories and possible
- */
-const getProjectDirectoriesFromCacheDependencyPath = async (cacheDependencyPath) => {
-    if (projectDirectoriesMemoized !== null) {
-        return projectDirectoriesMemoized;
-    }
-    const globber = await glob.create(cacheDependencyPath);
-    const cacheDependenciesPaths = await globber.glob();
-    const existingDirectories = cacheDependenciesPaths
-        .map(path_1.default.dirname)
-        .filter((0, util_1.unique)())
-        .map(dirName => fs_1.default.realpathSync(dirName))
-        .filter(directory => fs_1.default.lstatSync(directory).isDirectory());
-    if (!existingDirectories.length)
-        core.warning(`No existing directories found containing cache-dependency-path="${cacheDependencyPath}"`);
-    projectDirectoriesMemoized = existingDirectories;
-    return existingDirectories;
-};
-/**
- * Finds the cache directories configured for the repo if cache-dependency-path is not empty
- * @param packageManagerInfo - an object having getCacheFolderPath method specific to given PM
- * @param cacheDependencyPath - either a single string or multiline string with possible glob patterns
- *                              expected to be the result of `core.getInput('cache-dependency-path')`
- * @return list of files on which the cache depends
- */
-const getCacheDirectoriesFromCacheDependencyPath = async (packageManagerInfo, cacheDependencyPath) => {
-    const projectDirectories = await getProjectDirectoriesFromCacheDependencyPath(cacheDependencyPath);
-    const cacheFoldersPaths = await Promise.all(projectDirectories.map(async (projectDirectory) => {
-        const cacheFolderPath = await packageManagerInfo.getCacheFolderPath(projectDirectory);
-        core.debug(`${packageManagerInfo.name}'s cache folder "${cacheFolderPath}" configured for the directory "${projectDirectory}"`);
-        return cacheFolderPath;
-    }));
-    // uniq in order to do not cache the same directories twice
-    return cacheFoldersPaths.filter((0, util_1.unique)());
-};
-/**
- * Finds the cache directories configured for the repo ignoring cache-dependency-path
- * @param packageManagerInfo - an object having getCacheFolderPath method specific to given PM
- * @return list of files on which the cache depends
- */
-const getCacheDirectoriesForRootProject = async (packageManagerInfo) => {
-    const cacheFolderPath = await packageManagerInfo.getCacheFolderPath();
-    core.debug(`${packageManagerInfo.name}'s cache folder "${cacheFolderPath}" configured for the root directory`);
-    return [cacheFolderPath];
-};
-/**
- * A function to find the cache directories configured for the repo
- * currently it handles only the case of PM=yarn && cacheDependencyPath is not empty
- * @param packageManagerInfo - an object having getCacheFolderPath method specific to given PM
- * @param cacheDependencyPath - either a single string or multiline string with possible glob patterns
- *                              expected to be the result of `core.getInput('cache-dependency-path')`
- * @return list of files on which the cache depends
- */
-const getCacheDirectories = async (packageManagerInfo, cacheDependencyPath) => {
-    // For yarn, if cacheDependencyPath is set, ask information about cache folders in each project
-    // folder satisfied by cacheDependencyPath https://github.com/actions/setup-node/issues/488
-    if (packageManagerInfo.name === 'yarn' && cacheDependencyPath) {
-        return getCacheDirectoriesFromCacheDependencyPath(packageManagerInfo, cacheDependencyPath);
-    }
-    return getCacheDirectoriesForRootProject(packageManagerInfo);
-};
-exports.getCacheDirectories = getCacheDirectories;
-/**
- * A function to check if the directory is a yarn project configured to manage
- * obsolete dependencies in the local cache
- * @param directory - a path to the folder
- * @return - true if the directory's project is yarn managed
- *  - if there's .yarn/cache folder do not mess with the dependencies kept in the repo, return false
- *  - global cache is not managed by yarn @see https://yarnpkg.com/features/offline-cache, return false
- *  - if local cache is not explicitly enabled (not yarn3), return false
- *  - return true otherwise
- */
-const projectHasYarnBerryManagedDependencies = async (directory) => {
-    const workDir = directory || process.env.GITHUB_WORKSPACE || '.';
-    core.debug(`check if "${workDir}" has locally managed yarn3 dependencies`);
-    // if .yarn/cache directory exists the cache is managed by version control system
-    const yarnCacheFile = path_1.default.join(workDir, '.yarn', 'cache');
-    if (fs_1.default.existsSync(yarnCacheFile) &&
-        fs_1.default.lstatSync(yarnCacheFile).isDirectory()) {
-        core.debug(`"${workDir}" has .yarn/cache - dependencies are kept in the repository`);
-        return Promise.resolve(false);
-    }
-    // NOTE: yarn1 returns 'undefined' with return code = 0
-    const enableGlobalCache = await (0, exports.getCommandOutput)('yarn config get enableGlobalCache', workDir);
-    // only local cache is not managed by yarn
-    const managed = enableGlobalCache.includes('false');
-    if (managed) {
-        core.debug(`"${workDir}" dependencies are managed by yarn 3 locally`);
-        return true;
-    }
-    else {
-        core.debug(`"${workDir}" dependencies are not managed by yarn 3 locally`);
-        return false;
-    }
-};
-/**
- * A function to report the repo contains Yarn managed projects
- * @param packageManagerInfo - used to make sure current package manager is yarn
- * @param cacheDependencyPath - either a single string or multiline string with possible glob patterns
- *                              expected to be the result of `core.getInput('cache-dependency-path')`
- * @return - true if all project directories configured to be Yarn managed
- */
-const repoHasYarnBerryManagedDependencies = async (packageManagerInfo, cacheDependencyPath) => {
-    if (packageManagerInfo.name !== 'yarn')
-        return false;
-    const yarnDirs = cacheDependencyPath
-        ? await getProjectDirectoriesFromCacheDependencyPath(cacheDependencyPath)
-        : [''];
-    const isManagedList = await Promise.all(yarnDirs.map(projectHasYarnBerryManagedDependencies));
-    return isManagedList.every(Boolean);
-};
-exports.repoHasYarnBerryManagedDependencies = repoHasYarnBerryManagedDependencies;
-function isGhes() {
-    const ghUrl = new URL(process.env['GITHUB_SERVER_URL'] || 'https://github.com');
-    const hostname = ghUrl.hostname.trimEnd().toUpperCase();
-    const isGitHubHost = hostname === 'GITHUB.COM';
-    const isGitHubEnterpriseCloudHost = hostname.endsWith('.GHE.COM');
-    const isLocalHost = hostname.endsWith('.LOCALHOST');
-    return !isGitHubHost && !isGitHubEnterpriseCloudHost && !isLocalHost;
-}
-function isCacheFeatureAvailable() {
-    if (cache.isFeatureAvailable())
-        return true;
-    if (isGhes()) {
-        core.warning('Cache action is only supported on GHES version >= 3.5. If you are on version >=3.5 Please check with GHES admin if Actions cache service is enabled or not.');
-        return false;
-    }
-    core.warning('The runner was not able to contact the cache service. Caching will be skipped');
-    return false;
-}
-
-
-/***/ }),
-
-/***/ 27242:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Outputs = exports.State = exports.LockType = void 0;
-var LockType;
-(function (LockType) {
-    LockType["Npm"] = "npm";
-    LockType["Pnpm"] = "pnpm";
-    LockType["Yarn"] = "yarn";
-})(LockType || (exports.LockType = LockType = {}));
-var State;
-(function (State) {
-    State["CachePackageManager"] = "SETUP_NODE_CACHE_PACKAGE_MANAGER";
-    State["CachePrimaryKey"] = "CACHE_KEY";
-    State["CacheMatchedKey"] = "CACHE_RESULT";
-    State["CachePaths"] = "CACHE_PATHS";
-})(State || (exports.State = State = {}));
-var Outputs;
-(function (Outputs) {
-    Outputs["CacheHit"] = "cache-hit";
-})(Outputs || (exports.Outputs = Outputs = {}));
-
-
-/***/ }),
-
-/***/ 74864:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tc = __importStar(__nccwpck_require__(33472));
-const semver_1 = __importDefault(__nccwpck_require__(62088));
-const base_distribution_1 = __importDefault(__nccwpck_require__(60709));
-class BasePrereleaseNodejs extends base_distribution_1.default {
-    constructor(nodeInfo) {
-        super(nodeInfo);
-    }
-    findVersionInHostedToolCacheDirectory() {
-        let toolPath = '';
-        const localVersionPaths = tc
-            .findAllVersions('node', this.nodeInfo.arch)
-            .filter(i => {
-            const prerelease = semver_1.default.prerelease(i, {});
-            if (!prerelease) {
-                return false;
-            }
-            return prerelease[0].toString().includes(this.distribution);
-        });
-        localVersionPaths.sort(semver_1.default.rcompare);
-        const localVersion = this.evaluateVersions(localVersionPaths);
-        if (localVersion) {
-            toolPath = tc.find('node', localVersion, this.nodeInfo.arch);
-        }
-        return toolPath;
-    }
-    validRange(versionSpec) {
-        let range;
-        const [raw, prerelease] = this.splitVersionSpec(versionSpec);
-        const isValidVersion = semver_1.default.valid(raw);
-        const rawVersion = (isValidVersion ? raw : semver_1.default.coerce(raw));
-        if (prerelease !== this.distribution) {
-            range = versionSpec;
-        }
-        else {
-            range = `${semver_1.default.validRange(`^${rawVersion}-${this.distribution}`)}-0`;
-        }
-        return { range, options: { includePrerelease: !isValidVersion } };
-    }
-    splitVersionSpec(versionSpec) {
-        return versionSpec.split(/-(.*)/s);
-    }
-}
-exports["default"] = BasePrereleaseNodejs;
-
-
-/***/ }),
-
-/***/ 60709:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const tc = __importStar(__nccwpck_require__(33472));
-const hc = __importStar(__nccwpck_require__(54844));
-const core = __importStar(__nccwpck_require__(37484));
-const io = __importStar(__nccwpck_require__(94994));
-const semver_1 = __importDefault(__nccwpck_require__(62088));
-const assert = __importStar(__nccwpck_require__(42613));
-const path = __importStar(__nccwpck_require__(16928));
-const os_1 = __importDefault(__nccwpck_require__(70857));
-const fs_1 = __importDefault(__nccwpck_require__(79896));
-class BaseDistribution {
-    nodeInfo;
-    httpClient;
-    osPlat = os_1.default.platform();
-    constructor(nodeInfo) {
-        this.nodeInfo = nodeInfo;
-        this.httpClient = new hc.HttpClient('setup-node', [], {
-            allowRetries: true,
-            maxRetries: 3
-        });
-    }
-    async setupNodeJs() {
-        let nodeJsVersions;
-        if (this.nodeInfo.checkLatest) {
-            const evaluatedVersion = await this.findVersionInDist(nodeJsVersions);
-            this.nodeInfo.versionSpec = evaluatedVersion;
-        }
-        let toolPath = this.findVersionInHostedToolCacheDirectory();
-        if (toolPath) {
-            core.info(`Found in cache @ ${toolPath}`);
-        }
-        else {
-            const evaluatedVersion = await this.findVersionInDist(nodeJsVersions);
-            const toolName = this.getNodejsDistInfo(evaluatedVersion);
-            toolPath = await this.downloadNodejs(toolName);
-        }
-        if (this.osPlat != 'win32') {
-            toolPath = path.join(toolPath, 'bin');
-        }
-        core.addPath(toolPath);
-    }
-    async findVersionInDist(nodeJsVersions) {
-        if (!nodeJsVersions) {
-            nodeJsVersions = await this.getNodeJsVersions();
-        }
-        const versions = this.filterVersions(nodeJsVersions);
-        const evaluatedVersion = this.evaluateVersions(versions);
-        if (!evaluatedVersion) {
-            throw new Error(`Unable to find Node version '${this.nodeInfo.versionSpec}' for platform ${this.osPlat} and architecture ${this.nodeInfo.arch}.`);
-        }
-        return evaluatedVersion;
-    }
-    evaluateVersions(versions) {
-        let version = '';
-        const { range, options } = this.validRange(this.nodeInfo.versionSpec);
-        core.debug(`evaluating ${versions.length} versions`);
-        for (const potential of versions) {
-            const satisfied = semver_1.default.satisfies(potential, range, options);
-            if (satisfied) {
-                version = potential;
-                break;
-            }
-        }
-        if (version) {
-            core.debug(`matched: ${version}`);
-        }
-        else {
-            core.debug('match not found');
-        }
-        return version;
-    }
-    findVersionInHostedToolCacheDirectory() {
-        return tc.find('node', this.nodeInfo.versionSpec, this.translateArchToDistUrl(this.nodeInfo.arch));
-    }
-    async getNodeJsVersions() {
-        const initialUrl = this.getDistributionUrl(this.nodeInfo.mirror);
-        const dataUrl = `${initialUrl}/index.json`;
-        const headers = {};
-        if (this.nodeInfo.mirrorToken) {
-            headers['Authorization'] = this.nodeInfo.mirrorToken;
-        }
-        const response = await this.httpClient.getJson(dataUrl, headers);
-        return response.result || [];
-    }
-    getNodejsDistInfo(version) {
-        const osArch = this.translateArchToDistUrl(this.nodeInfo.arch);
-        version = semver_1.default.clean(version) || '';
-        const fileName = this.osPlat == 'win32'
-            ? `node-v${version}-win-${osArch}`
-            : `node-v${version}-${this.osPlat}-${osArch}`;
-        const urlFileName = this.osPlat == 'win32'
-            ? this.nodeInfo.arch === 'arm64'
-                ? `${fileName}.zip`
-                : `${fileName}.7z`
-            : `${fileName}.tar.gz`;
-        const initialUrl = this.getDistributionUrl(this.nodeInfo.mirror);
-        const url = `${initialUrl}/v${version}/${urlFileName}`;
-        return {
-            downloadUrl: url,
-            resolvedVersion: version,
-            arch: osArch,
-            fileName: fileName
-        };
-    }
-    async downloadNodejs(info) {
-        let downloadPath = '';
-        core.info(`Acquiring ${info.resolvedVersion} - ${info.arch} from ${info.downloadUrl}`);
-        try {
-            downloadPath = await tc.downloadTool(info.downloadUrl, undefined, this.nodeInfo.mirrorToken);
-        }
-        catch (err) {
-            if (err instanceof tc.HTTPError &&
-                err.httpStatusCode == 404 &&
-                this.osPlat == 'win32') {
-                return await this.acquireWindowsNodeFromFallbackLocation(info.resolvedVersion, info.arch);
-            }
-            throw err;
-        }
-        const toolPath = await this.extractArchive(downloadPath, info, true);
-        core.info('Done');
-        return toolPath;
-    }
-    validRange(versionSpec) {
-        let options;
-        const c = semver_1.default.clean(versionSpec) || '';
-        const valid = semver_1.default.valid(c) ?? versionSpec;
-        return { range: valid, options };
-    }
-    async acquireWindowsNodeFromFallbackLocation(version, arch = os_1.default.arch()) {
-        const initialUrl = this.getDistributionUrl(this.nodeInfo.mirror);
-        const osArch = this.translateArchToDistUrl(arch);
-        // Create temporary folder to download to
-        const tempDownloadFolder = `temp_${crypto.randomUUID()}`;
-        const tempDirectory = process.env['RUNNER_TEMP'] || '';
-        assert.ok(tempDirectory, 'Expected RUNNER_TEMP to be defined');
-        const tempDir = path.join(tempDirectory, tempDownloadFolder);
-        await io.mkdirP(tempDir);
-        let exeUrl;
-        let libUrl;
-        try {
-            exeUrl = `${initialUrl}/v${version}/win-${osArch}/node.exe`;
-            libUrl = `${initialUrl}/v${version}/win-${osArch}/node.lib`;
-            core.info(`Downloading only node binary from ${exeUrl}`);
-            const exePath = await tc.downloadTool(exeUrl, undefined, this.nodeInfo.mirrorToken);
-            await io.cp(exePath, path.join(tempDir, 'node.exe'));
-            const libPath = await tc.downloadTool(libUrl, undefined, this.nodeInfo.mirrorToken);
-            await io.cp(libPath, path.join(tempDir, 'node.lib'));
-        }
-        catch (err) {
-            if (err instanceof tc.HTTPError && err.httpStatusCode == 404) {
-                exeUrl = `${initialUrl}/v${version}/node.exe`;
-                libUrl = `${initialUrl}/v${version}/node.lib`;
-                const exePath = await tc.downloadTool(exeUrl, undefined, this.nodeInfo.mirrorToken);
-                await io.cp(exePath, path.join(tempDir, 'node.exe'));
-                const libPath = await tc.downloadTool(libUrl, undefined, this.nodeInfo.mirrorToken);
-                await io.cp(libPath, path.join(tempDir, 'node.lib'));
-            }
-            else {
-                throw err;
-            }
-        }
-        const toolPath = await tc.cacheDir(tempDir, 'node', version, arch);
-        return toolPath;
-    }
-    async extractArchive(downloadPath, info, isOfficialArchive) {
-        //
-        // Extract
-        //
-        core.info('Extracting ...');
-        let extPath;
-        info = info || {}; // satisfy compiler, never null when reaches here
-        if (this.osPlat == 'win32') {
-            const extension = this.nodeInfo.arch === 'arm64' ? '.zip' : '.7z';
-            // Rename archive to add extension because after downloading
-            // archive does not contain extension type and it leads to some issues
-            // on Windows runners without PowerShell Core.
-            //
-            // For default PowerShell Windows it should contain extension type to unpack it.
-            if (extension === '.zip' && isOfficialArchive) {
-                const renamedArchive = `${downloadPath}.zip`;
-                fs_1.default.renameSync(downloadPath, renamedArchive);
-                extPath = await tc.extractZip(renamedArchive);
-            }
-            else {
-                const _7zPath = path.join(__dirname, '../..', 'externals', '7zr.exe');
-                extPath = await tc.extract7z(downloadPath, undefined, _7zPath);
-            }
-            // 7z extracts to folder matching file name
-            const nestedPath = path.join(extPath, path.basename(info.fileName, extension));
-            if (fs_1.default.existsSync(nestedPath)) {
-                extPath = nestedPath;
-            }
-        }
-        else {
-            extPath = await tc.extractTar(downloadPath, undefined, [
-                'xz',
-                '--strip',
-                '1'
-            ]);
-        }
-        //
-        // Install into the local tool cache - node extracts with a root folder that matches the fileName downloaded
-        //
-        core.info('Adding to the cache ...');
-        const toolPath = await tc.cacheDir(extPath, 'node', info.resolvedVersion, info.arch);
-        return toolPath;
-    }
-    getDistFileName() {
-        const osArch = this.translateArchToDistUrl(this.nodeInfo.arch);
-        // node offers a json list of versions
-        let dataFileName;
-        switch (this.osPlat) {
-            case 'linux':
-                dataFileName = `linux-${osArch}`;
-                break;
-            case 'darwin':
-                dataFileName = `osx-${osArch}-tar`;
-                break;
-            case 'win32':
-                if (this.nodeInfo.arch === 'arm64') {
-                    dataFileName = `win-${osArch}-zip`;
-                }
-                else {
-                    dataFileName = `win-${osArch}-exe`;
-                }
-                break;
-            default:
-                throw new Error(`Unexpected OS '${this.osPlat}'`);
-        }
-        return dataFileName;
-    }
-    filterVersions(nodeJsVersions) {
-        const versions = [];
-        const dataFileName = this.getDistFileName();
-        nodeJsVersions.forEach((nodeVersion) => {
-            // ensure this version supports your os and platform
-            if (nodeVersion.files.indexOf(dataFileName) >= 0) {
-                versions.push(nodeVersion.version);
-            }
-        });
-        return versions.sort(semver_1.default.rcompare);
-    }
-    translateArchToDistUrl(arch) {
-        switch (arch) {
-            case 'arm':
-                return 'armv7l';
-            default:
-                return arch;
-        }
-    }
-}
-exports["default"] = BaseDistribution;
-
-
-/***/ }),
-
-/***/ 41180:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getNodejsDistribution = getNodejsDistribution;
-const nightly_builds_1 = __importDefault(__nccwpck_require__(49762));
-const official_builds_1 = __importDefault(__nccwpck_require__(39928));
-const rc_builds_1 = __importDefault(__nccwpck_require__(7322));
-const canary_builds_1 = __importDefault(__nccwpck_require__(99125));
-var Distributions;
-(function (Distributions) {
-    Distributions["DEFAULT"] = "";
-    Distributions["CANARY"] = "v8-canary";
-    Distributions["NIGHTLY"] = "nightly";
-    Distributions["RC"] = "rc";
-})(Distributions || (Distributions = {}));
-function getNodejsDistribution(installerOptions) {
-    const versionSpec = installerOptions.versionSpec;
-    let distribution;
-    if (versionSpec.includes(Distributions.NIGHTLY)) {
-        distribution = new nightly_builds_1.default(installerOptions);
-    }
-    else if (versionSpec.includes(Distributions.CANARY)) {
-        distribution = new canary_builds_1.default(installerOptions);
-    }
-    else if (versionSpec.includes(Distributions.RC)) {
-        distribution = new rc_builds_1.default(installerOptions);
-    }
-    else {
-        distribution = new official_builds_1.default(installerOptions);
-    }
-    return distribution;
-}
-
-
-/***/ }),
-
-/***/ 49762:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const base_distribution_prerelease_1 = __importDefault(__nccwpck_require__(74864));
-class NightlyNodejs extends base_distribution_prerelease_1.default {
-    distribution = 'nightly';
-    constructor(nodeInfo) {
-        super(nodeInfo);
-    }
-    getDistributionUrl(mirror) {
-        const url = mirror || 'https://nodejs.org';
-        return `${url}/download/nightly`;
-    }
-}
-exports["default"] = NightlyNodejs;
-
-
-/***/ }),
-
-/***/ 39928:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(37484));
-const tc = __importStar(__nccwpck_require__(33472));
-const path_1 = __importDefault(__nccwpck_require__(16928));
-const base_distribution_1 = __importDefault(__nccwpck_require__(60709));
-class OfficialBuilds extends base_distribution_1.default {
-    constructor(nodeInfo) {
-        super(nodeInfo);
-    }
-    async setupNodeJs() {
-        let manifest;
-        let nodeJsVersions;
-        const osArch = this.translateArchToDistUrl(this.nodeInfo.arch);
-        if (this.isLtsAlias(this.nodeInfo.versionSpec)) {
-            core.info('Attempt to resolve LTS alias from manifest...');
-            // No try-catch since it's not possible to resolve LTS alias without manifest
-            manifest = await this.getManifest();
-            this.nodeInfo.versionSpec = this.resolveLtsAliasFromManifest(this.nodeInfo.versionSpec, this.nodeInfo.stable, manifest);
-        }
-        if (this.isLatestSyntax(this.nodeInfo.versionSpec)) {
-            nodeJsVersions = await this.getNodeJsVersions();
-            const versions = this.filterVersions(nodeJsVersions);
-            this.nodeInfo.versionSpec = this.evaluateVersions(versions);
-            core.info('getting latest node version...');
-        }
-        if (this.nodeInfo.checkLatest) {
-            core.info('Attempt to resolve the latest version from manifest...');
-            const resolvedVersion = await this.resolveVersionFromManifest(this.nodeInfo.versionSpec, this.nodeInfo.stable, osArch, manifest);
-            if (resolvedVersion) {
-                this.nodeInfo.versionSpec = resolvedVersion;
-                core.info(`Resolved as '${resolvedVersion}'`);
-            }
-            else {
-                core.info(`Failed to resolve version ${this.nodeInfo.versionSpec} from manifest`);
-            }
-        }
-        let toolPath = this.findVersionInHostedToolCacheDirectory();
-        if (toolPath) {
-            core.info(`Found in cache @ ${toolPath}`);
-            this.addToolPath(toolPath);
-            return;
-        }
-        let downloadPath = '';
-        try {
-            core.info(`Attempting to download ${this.nodeInfo.versionSpec}...`);
-            const versionInfo = await this.getInfoFromManifest(this.nodeInfo.versionSpec, this.nodeInfo.stable, osArch, manifest);
-            if (versionInfo) {
-                core.info(`Acquiring ${versionInfo.resolvedVersion} - ${versionInfo.arch} from ${versionInfo.downloadUrl}`);
-                downloadPath = await tc.downloadTool(versionInfo.downloadUrl, undefined, this.nodeInfo.mirror ? this.nodeInfo.mirrorToken : this.nodeInfo.auth);
-                if (downloadPath) {
-                    toolPath = await this.extractArchive(downloadPath, versionInfo, false);
-                }
-            }
-            else {
-                core.info(`Not found in manifest. Falling back to download directly from ${this.nodeInfo.mirror || 'Node'}`);
-            }
-        }
-        catch (err) {
-            // Rate limit?
-            if (err instanceof tc.HTTPError &&
-                (err.httpStatusCode === 403 || err.httpStatusCode === 429)) {
-                core.info(`Received HTTP status code ${err.httpStatusCode}. This usually indicates the rate limit has been exceeded`);
-            }
-            else {
-                core.info(err.message);
-            }
-            core.debug(err.stack ?? 'empty stack');
-            core.info('Falling back to download directly from Node');
-        }
-        if (!toolPath) {
-            toolPath = await this.downloadDirectlyFromNode();
-        }
-        if (this.osPlat != 'win32') {
-            toolPath = path_1.default.join(toolPath, 'bin');
-        }
-        core.addPath(toolPath);
-    }
-    addToolPath(toolPath) {
-        if (this.osPlat != 'win32') {
-            toolPath = path_1.default.join(toolPath, 'bin');
-        }
-        core.addPath(toolPath);
-    }
-    async downloadDirectlyFromNode() {
-        const nodeJsVersions = await this.getNodeJsVersions();
-        const versions = this.filterVersions(nodeJsVersions);
-        const evaluatedVersion = this.evaluateVersions(versions);
-        if (!evaluatedVersion) {
-            throw new Error(`Unable to find Node version '${this.nodeInfo.versionSpec}' for platform ${this.osPlat} and architecture ${this.nodeInfo.arch}.`);
-        }
-        const toolName = this.getNodejsDistInfo(evaluatedVersion);
-        try {
-            const toolPath = await this.downloadNodejs(toolName);
-            return toolPath;
-        }
-        catch (error) {
-            if (error instanceof tc.HTTPError && error.httpStatusCode === 404) {
-                core.warning(`Node version ${this.nodeInfo.versionSpec} for platform ${this.osPlat} and architecture ${this.nodeInfo.arch} was found but failed to download. ` +
-                    'This usually happens when downloadable binaries are not fully updated at https://nodejs.org/. ' +
-                    'To resolve this issue you may either fall back to the older version or try again later.');
-            }
-            throw error;
-        }
-    }
-    evaluateVersions(versions) {
-        let version = '';
-        if (this.isLatestSyntax(this.nodeInfo.versionSpec)) {
-            core.info(`getting latest node version...`);
-            return versions[0];
-        }
-        version = super.evaluateVersions(versions);
-        return version;
-    }
-    getDistributionUrl(mirror) {
-        const url = mirror || 'https://nodejs.org';
-        return `${url}/dist`;
-    }
-    getManifest() {
-        core.debug('Getting manifest from actions/node-versions@main');
-        return tc.getManifestFromRepo('actions', 'node-versions', this.nodeInfo.mirror ? this.nodeInfo.mirrorToken : this.nodeInfo.auth, 'main');
-    }
-    resolveLtsAliasFromManifest(versionSpec, stable, manifest) {
-        const alias = versionSpec.split('lts/')[1]?.toLowerCase();
-        if (!alias) {
-            throw new Error(`Unable to parse LTS alias for Node version '${versionSpec}'`);
-        }
-        core.debug(`LTS alias '${alias}' for Node version '${versionSpec}'`);
-        // Supported formats are `lts/<alias>`, `lts/*`, and `lts/-n`. Where asterisk means highest possible LTS and -n means the nth-highest.
-        const n = Number(alias);
-        const aliases = Object.fromEntries(manifest
-            .filter(x => x.lts && x.stable === stable)
-            .map(x => [x.lts.toLowerCase(), x])
-            .reverse());
-        const numbered = Object.values(aliases);
-        const release = alias === '*'
-            ? numbered[numbered.length - 1]
-            : n < 0
-                ? numbered[numbered.length - 1 + n]
-                : aliases[alias];
-        if (!release) {
-            throw new Error(`Unable to find LTS release '${alias}' for Node version '${versionSpec}'.`);
-        }
-        core.debug(`Found LTS release '${release.version}' for Node version '${versionSpec}'`);
-        return release.version.split('.')[0];
-    }
-    async resolveVersionFromManifest(versionSpec, stable, osArch, manifest) {
-        try {
-            const info = await this.getInfoFromManifest(versionSpec, stable, osArch, manifest);
-            return info?.resolvedVersion;
-        }
-        catch (err) {
-            core.info('Unable to resolve version from manifest...');
-            core.debug(err.message);
-        }
-    }
-    async getInfoFromManifest(versionSpec, stable, osArch, manifest) {
-        let info = null;
-        if (!manifest) {
-            core.debug('No manifest cached');
-            manifest = await this.getManifest();
-        }
-        const rel = await tc.findFromManifest(versionSpec, stable, manifest, osArch);
-        if (rel && rel.files.length > 0) {
-            info = {};
-            info.resolvedVersion = rel.version;
-            info.arch = rel.files[0].arch;
-            info.downloadUrl = rel.files[0].download_url;
-            info.fileName = rel.files[0].filename;
-        }
-        return info;
-    }
-    isLtsAlias(versionSpec) {
-        return versionSpec.startsWith('lts/');
-    }
-    isLatestSyntax(versionSpec) {
-        return ['current', 'latest', 'node'].includes(versionSpec);
-    }
-}
-exports["default"] = OfficialBuilds;
-
-
-/***/ }),
-
-/***/ 7322:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const base_distribution_1 = __importDefault(__nccwpck_require__(60709));
-class RcBuild extends base_distribution_1.default {
-    constructor(nodeInfo) {
-        super(nodeInfo);
-    }
-    getDistributionUrl(mirror) {
-        const url = mirror || 'https://nodejs.org';
-        return `${url}/download/rc`;
-    }
-}
-exports["default"] = RcBuild;
-
-
-/***/ }),
-
-/***/ 99125:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const base_distribution_prerelease_1 = __importDefault(__nccwpck_require__(74864));
-class CanaryBuild extends base_distribution_prerelease_1.default {
-    distribution = 'v8-canary';
-    constructor(nodeInfo) {
-        super(nodeInfo);
-    }
-    getDistributionUrl(mirror) {
-        const url = mirror || 'https://nodejs.org';
-        return `${url}/download/v8-canary`;
-    }
-}
-exports["default"] = CanaryBuild;
-
-
-/***/ }),
-
-/***/ 41730:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.run = run;
-exports.getNameFromPackageManagerField = getNameFromPackageManagerField;
-const core = __importStar(__nccwpck_require__(37484));
-const os_1 = __importDefault(__nccwpck_require__(70857));
-const fs_1 = __importDefault(__nccwpck_require__(79896));
-const auth = __importStar(__nccwpck_require__(98789));
-const path = __importStar(__nccwpck_require__(16928));
-const cache_restore_1 = __nccwpck_require__(44326);
-const cache_utils_1 = __nccwpck_require__(4673);
-const installer_factory_1 = __nccwpck_require__(41180);
-const util_1 = __nccwpck_require__(54527);
-const constants_1 = __nccwpck_require__(27242);
-async function run() {
-    try {
-        //
-        // Version is optional.  If supplied, install / use from the tool cache
-        // If not supplied then task is still used to setup proxy, auth, etc...
-        //
-        const version = resolveVersionInput();
-        let arch = core.getInput('architecture');
-        const cache = core.getInput('cache');
-        const packagemanagercache = (core.getInput('package-manager-cache') || 'true').toUpperCase() ===
-            'TRUE';
-        // if architecture supplied but node-version is not
-        // if we don't throw a warning, the already installed x64 node will be used which is not probably what user meant.
-        if (arch && !version) {
-            core.warning('`architecture` is provided but `node-version` is missing. In this configuration, the version/architecture of Node will not be changed. To fix this, provide `architecture` in combination with `node-version`');
-        }
-        if (!arch) {
-            arch = os_1.default.arch();
-        }
-        if (version) {
-            const token = core.getInput('token');
-            const auth = !token ? undefined : `token ${token}`;
-            const mirror = core.getInput('mirror');
-            const mirrorToken = core.getInput('mirror-token');
-            const stable = (core.getInput('stable') || 'true').toUpperCase() === 'TRUE';
-            const checkLatest = (core.getInput('check-latest') || 'false').toUpperCase() === 'TRUE';
-            const nodejsInfo = {
-                versionSpec: version,
-                checkLatest,
-                auth,
-                stable,
-                arch,
-                mirror,
-                mirrorToken
-            };
-            const nodeDistribution = (0, installer_factory_1.getNodejsDistribution)(nodejsInfo);
-            await nodeDistribution.setupNodeJs();
-        }
-        await (0, util_1.printEnvDetailsAndSetOutput)();
-        const registryUrl = core.getInput('registry-url');
-        if (registryUrl) {
-            auth.configAuthentication(registryUrl);
-        }
-        const cacheDependencyPath = core.getInput('cache-dependency-path');
-        if ((0, cache_utils_1.isCacheFeatureAvailable)()) {
-            // if the cache input is provided, use it for caching.
-            if (cache) {
-                core.saveState(constants_1.State.CachePackageManager, cache);
-                await (0, cache_restore_1.restoreCache)(cache, cacheDependencyPath);
-                // package manager npm is detected from package.json, enable auto-caching for npm.
-            }
-            else if (packagemanagercache) {
-                const resolvedPackageManager = getNameFromPackageManagerField();
-                if (resolvedPackageManager) {
-                    core.info("Detected npm as the package manager from package.json's packageManager field. " +
-                        'Auto caching has been enabled for npm. If you want to disable it, set package-manager-cache input to false');
-                    core.saveState(constants_1.State.CachePackageManager, resolvedPackageManager);
-                    await (0, cache_restore_1.restoreCache)(resolvedPackageManager, cacheDependencyPath);
-                }
-            }
-        }
-        const matchersPath = path.join(__dirname, '../..', '.github');
-        core.info(`##[add-matcher]${path.join(matchersPath, 'tsc.json')}`);
-        core.info(`##[add-matcher]${path.join(matchersPath, 'eslint-stylish.json')}`);
-        core.info(`##[add-matcher]${path.join(matchersPath, 'eslint-compact.json')}`);
-    }
-    catch (err) {
-        core.setFailed(err.message);
-    }
-}
-function resolveVersionInput() {
-    let version = core.getInput('node-version');
-    const versionFileInput = core.getInput('node-version-file');
-    if (version && versionFileInput) {
-        core.warning('Both node-version and node-version-file inputs are specified, only node-version will be used');
-    }
-    if (version) {
-        return version;
-    }
-    if (versionFileInput) {
-        const versionFilePath = path.join(process.env.GITHUB_WORKSPACE, versionFileInput);
-        const parsedVersion = (0, util_1.getNodeVersionFromFile)(versionFilePath);
-        if (parsedVersion) {
-            version = parsedVersion;
-        }
-        else {
-            core.warning(`Could not determine node version from ${versionFilePath}. Falling back`);
-        }
-        core.info(`Resolved ${versionFileInput} as ${version}`);
-    }
-    return version;
-}
-function getNameFromPackageManagerField() {
-    const npmRegex = /^(\^)?npm(@.*)?$/; // matches "npm", "npm@...", "^npm@..."
-    try {
-        const packageJson = JSON.parse(fs_1.default.readFileSync(path.join(process.env.GITHUB_WORKSPACE, 'package.json'), 'utf-8'));
-        // Check devEngines.packageManager first (object or array)
-        const devPM = packageJson?.devEngines?.packageManager;
-        const devPMArray = devPM ? (Array.isArray(devPM) ? devPM : [devPM]) : [];
-        for (const obj of devPMArray) {
-            if (typeof obj?.name === 'string' && npmRegex.test(obj.name)) {
-                return 'npm';
-            }
-        }
-        // Check top-level packageManager
-        const topLevelPM = packageJson?.packageManager;
-        if (typeof topLevelPM === 'string' && npmRegex.test(topLevelPM)) {
-            return 'npm';
-        }
-        return undefined;
-    }
-    catch {
-        return undefined;
-    }
-}
-
-
-/***/ }),
-
-/***/ 54527:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.unique = void 0;
-exports.getNodeVersionFromFile = getNodeVersionFromFile;
-exports.printEnvDetailsAndSetOutput = printEnvDetailsAndSetOutput;
-const core = __importStar(__nccwpck_require__(37484));
-const exec = __importStar(__nccwpck_require__(95236));
-const io = __importStar(__nccwpck_require__(94994));
-const fs_1 = __importDefault(__nccwpck_require__(79896));
-const path_1 = __importDefault(__nccwpck_require__(16928));
-function getNodeVersionFromFile(versionFilePath) {
-    if (!fs_1.default.existsSync(versionFilePath)) {
-        throw new Error(`The specified node version file at: ${versionFilePath} does not exist`);
-    }
-    const contents = fs_1.default.readFileSync(versionFilePath, 'utf8');
-    // Try parsing the file as an NPM `package.json` file.
-    try {
-        const manifest = JSON.parse(contents);
-        // Presume package.json file.
-        if (typeof manifest === 'object' && !!manifest) {
-            // Support Volta.
-            // See https://docs.volta.sh/guide/understanding#managing-your-project
-            if (manifest.volta?.node) {
-                return manifest.volta.node;
-            }
-            // support devEngines from npm 11
-            if (manifest.devEngines?.runtime) {
-                // find an entry with name set to node and having set a version.
-                // the devEngines.runtime can either be an object or an array of objects
-                const nodeEntry = [manifest.devEngines.runtime]
-                    .flat()
-                    .find(({ name, version }) => name?.toLowerCase() === 'node' && version);
-                if (nodeEntry) {
-                    return nodeEntry.version;
-                }
-            }
-            if (manifest.engines?.node) {
-                return manifest.engines.node;
-            }
-            // Support Volta workspaces.
-            // See https://docs.volta.sh/advanced/workspaces
-            if (manifest.volta?.extends) {
-                const extendedFilePath = path_1.default.resolve(path_1.default.dirname(versionFilePath), manifest.volta.extends);
-                core.info('Resolving node version from ' + extendedFilePath);
-                return getNodeVersionFromFile(extendedFilePath);
-            }
-            // If contents are an object, we parsed JSON
-            // this can happen if node-version-file is a package.json
-            // yet contains no volta.node or engines.node
-            //
-            // If node-version file is _not_ JSON, control flow
-            // will not have reached these lines.
-            //
-            // And because we've reached here, we know the contents
-            // *are* JSON, so no further string parsing makes sense.
-            return null;
-        }
-    }
-    catch {
-        core.info('Node version file is not JSON file');
-    }
-    const found = contents.match(/^(?:node(js)?\s+)?v?(?<version>[^\s]+)$/m);
-    return found?.groups?.version ?? contents.trim();
-}
-async function printEnvDetailsAndSetOutput() {
-    core.startGroup('Environment details');
-    const promises = ['node', 'npm', 'yarn'].map(async (tool) => {
-        const pathTool = await io.which(tool, false);
-        const output = pathTool ? await getToolVersion(tool, ['--version']) : '';
-        return { tool, output };
-    });
-    const tools = await Promise.all(promises);
-    tools.forEach(({ tool, output }) => {
-        if (tool === 'node') {
-            core.setOutput(`${tool}-version`, output);
-        }
-        core.info(`${tool}: ${output}`);
-    });
-    core.endGroup();
-}
-async function getToolVersion(tool, options) {
-    try {
-        const { stdout, stderr, exitCode } = await exec.getExecOutput(tool, options, {
-            ignoreReturnCode: true,
-            silent: true
-        });
-        if (exitCode > 0) {
-            core.info(`[warning]${stderr}`);
-            return '';
-        }
-        return stdout.trim();
-    }
-    catch (err) {
-        return '';
-    }
-}
-const unique = () => {
-    const encountered = new Set();
-    return (value) => {
-        if (encountered.has(value))
-            return false;
-        encountered.add(value);
-        return true;
-    };
-};
-exports.unique = unique;
-
-
-/***/ }),
-
 /***/ 42613:
 /***/ ((module) => {
 
@@ -94653,6 +93048,35 @@ module.exports = /*#__PURE__*/JSON.parse('{"name":"@actions/cache","version":"5.
 /******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__nccwpck_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__nccwpck_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__nccwpck_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/compat */
 /******/ 	
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
@@ -94662,11 +93086,1152 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
-var exports = __webpack_exports__;
 
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const main_1 = __nccwpck_require__(41730);
-(0, main_1.run)();
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(37484);
+// EXTERNAL MODULE: external "os"
+var external_os_ = __nccwpck_require__(70857);
+var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_);
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(79896);
+var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_);
+// EXTERNAL MODULE: external "path"
+var external_path_ = __nccwpck_require__(16928);
+var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
+;// CONCATENATED MODULE: ./src/authutil.ts
+
+
+
+
+function configAuthentication(registryUrl) {
+    const npmrc = external_path_.resolve(process.env['RUNNER_TEMP'] || process.cwd(), '.npmrc');
+    if (!registryUrl.endsWith('/')) {
+        registryUrl += '/';
+    }
+    writeRegistryToFile(registryUrl, npmrc);
+}
+function writeRegistryToFile(registryUrl, fileLocation) {
+    let scope = core.getInput('scope');
+    if (!scope) {
+        const normalizedUrl = registryUrl.includes('://')
+            ? registryUrl
+            : `https://${registryUrl}`;
+        try {
+            if (new URL(normalizedUrl).hostname === 'npm.pkg.github.com') {
+                // github.context.repo.owner reads GITHUB_REPOSITORY and splits on '/'
+                scope = (process.env['GITHUB_REPOSITORY'] ?? '/').split('/')[0];
+            }
+        }
+        catch {
+            // If URL parsing fails, skip auto-scoping
+        }
+    }
+    if (scope && scope[0] != '@') {
+        scope = '@' + scope;
+    }
+    if (scope) {
+        scope = scope.toLowerCase() + ':';
+    }
+    core.debug(`Setting auth in ${fileLocation}`);
+    let newContents = '';
+    if (external_fs_.existsSync(fileLocation)) {
+        const curContents = external_fs_.readFileSync(fileLocation, 'utf8');
+        curContents.split(external_os_.EOL).forEach((line) => {
+            // Add current contents unless they are setting the registry
+            if (!line.toLowerCase().startsWith(`${scope}registry`)) {
+                newContents += line + external_os_.EOL;
+            }
+        });
+    }
+    // Remove http: or https: from front of registry.
+    const authString = registryUrl.replace(/(^\w+:|^)/, '') + ':_authToken=${NODE_AUTH_TOKEN}';
+    const registryString = `${scope}registry=${registryUrl}`;
+    newContents += `${authString}${external_os_.EOL}${registryString}`;
+    external_fs_.writeFileSync(fileLocation, newContents);
+    core.exportVariable('NPM_CONFIG_USERCONFIG', fileLocation);
+    // Export empty node_auth_token if didn't exist so npm doesn't complain about not being able to find it
+    core.exportVariable('NODE_AUTH_TOKEN', process.env.NODE_AUTH_TOKEN || 'XXXXX-XXXXX-XXXXX-XXXXX');
+}
+
+// EXTERNAL MODULE: ./node_modules/@actions/cache/lib/cache.js
+var cache = __nccwpck_require__(5116);
+// EXTERNAL MODULE: ./node_modules/@actions/glob/lib/glob.js
+var glob = __nccwpck_require__(47206);
+;// CONCATENATED MODULE: ./src/constants.ts
+var LockType;
+(function (LockType) {
+    LockType["Npm"] = "npm";
+    LockType["Pnpm"] = "pnpm";
+    LockType["Yarn"] = "yarn";
+})(LockType || (LockType = {}));
+var State;
+(function (State) {
+    State["CachePackageManager"] = "SETUP_NODE_CACHE_PACKAGE_MANAGER";
+    State["CachePrimaryKey"] = "CACHE_KEY";
+    State["CacheMatchedKey"] = "CACHE_RESULT";
+    State["CachePaths"] = "CACHE_PATHS";
+})(State || (State = {}));
+var Outputs;
+(function (Outputs) {
+    Outputs["CacheHit"] = "cache-hit";
+})(Outputs || (Outputs = {}));
+
+// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
+var exec = __nccwpck_require__(95236);
+// EXTERNAL MODULE: ./node_modules/@actions/io/lib/io.js
+var io = __nccwpck_require__(94994);
+;// CONCATENATED MODULE: ./src/util.ts
+
+
+
+
+
+function getNodeVersionFromFile(versionFilePath) {
+    if (!external_fs_default().existsSync(versionFilePath)) {
+        throw new Error(`The specified node version file at: ${versionFilePath} does not exist`);
+    }
+    const contents = external_fs_default().readFileSync(versionFilePath, 'utf8');
+    // Try parsing the file as an NPM `package.json` file.
+    try {
+        const manifest = JSON.parse(contents);
+        // Presume package.json file.
+        if (typeof manifest === 'object' && !!manifest) {
+            // Support Volta.
+            // See https://docs.volta.sh/guide/understanding#managing-your-project
+            if (manifest.volta?.node) {
+                return manifest.volta.node;
+            }
+            // support devEngines from npm 11
+            if (manifest.devEngines?.runtime) {
+                // find an entry with name set to node and having set a version.
+                // the devEngines.runtime can either be an object or an array of objects
+                const nodeEntry = [manifest.devEngines.runtime]
+                    .flat()
+                    .find(({ name, version }) => name?.toLowerCase() === 'node' && version);
+                if (nodeEntry) {
+                    return nodeEntry.version;
+                }
+            }
+            if (manifest.engines?.node) {
+                return manifest.engines.node;
+            }
+            // Support Volta workspaces.
+            // See https://docs.volta.sh/advanced/workspaces
+            if (manifest.volta?.extends) {
+                const extendedFilePath = external_path_default().resolve(external_path_default().dirname(versionFilePath), manifest.volta.extends);
+                core.info('Resolving node version from ' + extendedFilePath);
+                return getNodeVersionFromFile(extendedFilePath);
+            }
+            // If contents are an object, we parsed JSON
+            // this can happen if node-version-file is a package.json
+            // yet contains no volta.node or engines.node
+            //
+            // If node-version file is _not_ JSON, control flow
+            // will not have reached these lines.
+            //
+            // And because we've reached here, we know the contents
+            // *are* JSON, so no further string parsing makes sense.
+            return null;
+        }
+    }
+    catch {
+        core.info('Node version file is not JSON file');
+    }
+    const found = contents.match(/^(?:node(js)?\s+)?v?(?<version>[^\s]+)$/m);
+    return found?.groups?.version ?? contents.trim();
+}
+async function printEnvDetailsAndSetOutput() {
+    core.startGroup('Environment details');
+    const promises = ['node', 'npm', 'yarn'].map(async (tool) => {
+        const pathTool = await io.which(tool, false);
+        const output = pathTool ? await getToolVersion(tool, ['--version']) : '';
+        return { tool, output };
+    });
+    const tools = await Promise.all(promises);
+    tools.forEach(({ tool, output }) => {
+        if (tool === 'node') {
+            core.setOutput(`${tool}-version`, output);
+        }
+        core.info(`${tool}: ${output}`);
+    });
+    core.endGroup();
+}
+async function getToolVersion(tool, options) {
+    try {
+        const { stdout, stderr, exitCode } = await exec.getExecOutput(tool, options, {
+            ignoreReturnCode: true,
+            silent: true
+        });
+        if (exitCode > 0) {
+            core.info(`[warning]${stderr}`);
+            return '';
+        }
+        return stdout.trim();
+    }
+    catch (err) {
+        return '';
+    }
+}
+const unique = () => {
+    const encountered = new Set();
+    return (value) => {
+        if (encountered.has(value))
+            return false;
+        encountered.add(value);
+        return true;
+    };
+};
+
+;// CONCATENATED MODULE: ./src/cache-utils.ts
+
+
+
+
+
+
+
+const supportedPackageManagers = {
+    npm: {
+        name: 'npm',
+        lockFilePatterns: ['package-lock.json', 'npm-shrinkwrap.json', 'yarn.lock'],
+        getCacheFolderPath: () => getCommandOutputNotEmpty('npm config get cache', 'Could not get npm cache folder path')
+    },
+    pnpm: {
+        name: 'pnpm',
+        lockFilePatterns: ['pnpm-lock.yaml'],
+        getCacheFolderPath: () => getCommandOutputNotEmpty('pnpm store path --silent', 'Could not get pnpm cache folder path')
+    },
+    yarn: {
+        name: 'yarn',
+        lockFilePatterns: ['yarn.lock'],
+        getCacheFolderPath: async (projectDir) => {
+            const yarnVersion = await getCommandOutputNotEmpty(`yarn --version`, 'Could not retrieve version of yarn', projectDir);
+            core.debug(`Consumed yarn version is ${yarnVersion} (working dir: "${projectDir || ''}")`);
+            const stdOut = yarnVersion.startsWith('1.')
+                ? await getCommandOutput('yarn cache dir', projectDir)
+                : await getCommandOutput('yarn config get cacheFolder', projectDir);
+            if (!stdOut) {
+                throw new Error(`Could not get yarn cache folder path for ${projectDir}`);
+            }
+            return stdOut;
+        }
+    }
+};
+const getCommandOutput = async (toolCommand, cwd) => {
+    let { stdout, stderr, exitCode } = await exec.getExecOutput(toolCommand, undefined, { ignoreReturnCode: true, ...(cwd && { cwd }) });
+    if (exitCode) {
+        stderr = !stderr.trim()
+            ? `The '${toolCommand}' command failed with exit code: ${exitCode}`
+            : stderr;
+        throw new Error(stderr);
+    }
+    return stdout.trim();
+};
+const getCommandOutputNotEmpty = async (toolCommand, error, cwd) => {
+    const stdOut = getCommandOutput(toolCommand, cwd);
+    if (!stdOut) {
+        throw new Error(error);
+    }
+    return stdOut;
+};
+const getPackageManagerInfo = async (packageManager) => {
+    if (packageManager === 'npm') {
+        return supportedPackageManagers.npm;
+    }
+    else if (packageManager === 'pnpm') {
+        return supportedPackageManagers.pnpm;
+    }
+    else if (packageManager === 'yarn') {
+        return supportedPackageManagers.yarn;
+    }
+    else {
+        return null;
+    }
+};
+/**
+ * getProjectDirectoriesFromCacheDependencyPath is called twice during `restoreCache`
+ *  - first through `getCacheDirectories`
+ *  - second from `repoHasYarn3ManagedCache`
+ *
+ *  it contains expensive IO operation and thus should be memoized
+ */
+let projectDirectoriesMemoized = null;
+/**
+ * unit test must reset memoized variables
+ */
+const resetProjectDirectoriesMemoized = () => (projectDirectoriesMemoized = null);
+/**
+ * Expands (converts) the string input `cache-dependency-path` to list of directories that
+ * may be project roots
+ * @param cacheDependencyPath - either a single string or multiline string with possible glob patterns
+ *                              expected to be the result of `core.getInput('cache-dependency-path')`
+ * @return list of directories and possible
+ */
+const getProjectDirectoriesFromCacheDependencyPath = async (cacheDependencyPath) => {
+    if (projectDirectoriesMemoized !== null) {
+        return projectDirectoriesMemoized;
+    }
+    const globber = await glob.create(cacheDependencyPath);
+    const cacheDependenciesPaths = await globber.glob();
+    const existingDirectories = cacheDependenciesPaths
+        .map((external_path_default()).dirname)
+        .filter(unique())
+        .map(dirName => external_fs_default().realpathSync(dirName))
+        .filter(directory => external_fs_default().lstatSync(directory).isDirectory());
+    if (!existingDirectories.length)
+        core.warning(`No existing directories found containing cache-dependency-path="${cacheDependencyPath}"`);
+    projectDirectoriesMemoized = existingDirectories;
+    return existingDirectories;
+};
+/**
+ * Finds the cache directories configured for the repo if cache-dependency-path is not empty
+ * @param packageManagerInfo - an object having getCacheFolderPath method specific to given PM
+ * @param cacheDependencyPath - either a single string or multiline string with possible glob patterns
+ *                              expected to be the result of `core.getInput('cache-dependency-path')`
+ * @return list of files on which the cache depends
+ */
+const getCacheDirectoriesFromCacheDependencyPath = async (packageManagerInfo, cacheDependencyPath) => {
+    const projectDirectories = await getProjectDirectoriesFromCacheDependencyPath(cacheDependencyPath);
+    const cacheFoldersPaths = await Promise.all(projectDirectories.map(async (projectDirectory) => {
+        const cacheFolderPath = await packageManagerInfo.getCacheFolderPath(projectDirectory);
+        core.debug(`${packageManagerInfo.name}'s cache folder "${cacheFolderPath}" configured for the directory "${projectDirectory}"`);
+        return cacheFolderPath;
+    }));
+    // uniq in order to do not cache the same directories twice
+    return cacheFoldersPaths.filter(unique());
+};
+/**
+ * Finds the cache directories configured for the repo ignoring cache-dependency-path
+ * @param packageManagerInfo - an object having getCacheFolderPath method specific to given PM
+ * @return list of files on which the cache depends
+ */
+const getCacheDirectoriesForRootProject = async (packageManagerInfo) => {
+    const cacheFolderPath = await packageManagerInfo.getCacheFolderPath();
+    core.debug(`${packageManagerInfo.name}'s cache folder "${cacheFolderPath}" configured for the root directory`);
+    return [cacheFolderPath];
+};
+/**
+ * A function to find the cache directories configured for the repo
+ * currently it handles only the case of PM=yarn && cacheDependencyPath is not empty
+ * @param packageManagerInfo - an object having getCacheFolderPath method specific to given PM
+ * @param cacheDependencyPath - either a single string or multiline string with possible glob patterns
+ *                              expected to be the result of `core.getInput('cache-dependency-path')`
+ * @return list of files on which the cache depends
+ */
+const getCacheDirectories = async (packageManagerInfo, cacheDependencyPath) => {
+    // For yarn, if cacheDependencyPath is set, ask information about cache folders in each project
+    // folder satisfied by cacheDependencyPath https://github.com/actions/setup-node/issues/488
+    if (packageManagerInfo.name === 'yarn' && cacheDependencyPath) {
+        return getCacheDirectoriesFromCacheDependencyPath(packageManagerInfo, cacheDependencyPath);
+    }
+    return getCacheDirectoriesForRootProject(packageManagerInfo);
+};
+/**
+ * A function to check if the directory is a yarn project configured to manage
+ * obsolete dependencies in the local cache
+ * @param directory - a path to the folder
+ * @return - true if the directory's project is yarn managed
+ *  - if there's .yarn/cache folder do not mess with the dependencies kept in the repo, return false
+ *  - global cache is not managed by yarn @see https://yarnpkg.com/features/offline-cache, return false
+ *  - if local cache is not explicitly enabled (not yarn3), return false
+ *  - return true otherwise
+ */
+const projectHasYarnBerryManagedDependencies = async (directory) => {
+    const workDir = directory || process.env.GITHUB_WORKSPACE || '.';
+    core.debug(`check if "${workDir}" has locally managed yarn3 dependencies`);
+    // if .yarn/cache directory exists the cache is managed by version control system
+    const yarnCacheFile = external_path_default().join(workDir, '.yarn', 'cache');
+    if (external_fs_default().existsSync(yarnCacheFile) &&
+        external_fs_default().lstatSync(yarnCacheFile).isDirectory()) {
+        core.debug(`"${workDir}" has .yarn/cache - dependencies are kept in the repository`);
+        return Promise.resolve(false);
+    }
+    // NOTE: yarn1 returns 'undefined' with return code = 0
+    const enableGlobalCache = await getCommandOutput('yarn config get enableGlobalCache', workDir);
+    // only local cache is not managed by yarn
+    const managed = enableGlobalCache.includes('false');
+    if (managed) {
+        core.debug(`"${workDir}" dependencies are managed by yarn 3 locally`);
+        return true;
+    }
+    else {
+        core.debug(`"${workDir}" dependencies are not managed by yarn 3 locally`);
+        return false;
+    }
+};
+/**
+ * A function to report the repo contains Yarn managed projects
+ * @param packageManagerInfo - used to make sure current package manager is yarn
+ * @param cacheDependencyPath - either a single string or multiline string with possible glob patterns
+ *                              expected to be the result of `core.getInput('cache-dependency-path')`
+ * @return - true if all project directories configured to be Yarn managed
+ */
+const repoHasYarnBerryManagedDependencies = async (packageManagerInfo, cacheDependencyPath) => {
+    if (packageManagerInfo.name !== 'yarn')
+        return false;
+    const yarnDirs = cacheDependencyPath
+        ? await getProjectDirectoriesFromCacheDependencyPath(cacheDependencyPath)
+        : [''];
+    const isManagedList = await Promise.all(yarnDirs.map(projectHasYarnBerryManagedDependencies));
+    return isManagedList.every(Boolean);
+};
+function isGhes() {
+    const ghUrl = new URL(process.env['GITHUB_SERVER_URL'] || 'https://github.com');
+    const hostname = ghUrl.hostname.trimEnd().toUpperCase();
+    const isGitHubHost = hostname === 'GITHUB.COM';
+    const isGitHubEnterpriseCloudHost = hostname.endsWith('.GHE.COM');
+    const isLocalHost = hostname.endsWith('.LOCALHOST');
+    return !isGitHubHost && !isGitHubEnterpriseCloudHost && !isLocalHost;
+}
+function isCacheFeatureAvailable() {
+    if (cache.isFeatureAvailable())
+        return true;
+    if (isGhes()) {
+        core.warning('Cache action is only supported on GHES version >= 3.5. If you are on version >=3.5 Please check with GHES admin if Actions cache service is enabled or not.');
+        return false;
+    }
+    core.warning('The runner was not able to contact the cache service. Caching will be skipped');
+    return false;
+}
+
+;// CONCATENATED MODULE: ./src/cache-restore.ts
+
+
+
+
+
+
+
+
+const restoreCache = async (packageManager, cacheDependencyPath) => {
+    const packageManagerInfo = await getPackageManagerInfo(packageManager);
+    if (!packageManagerInfo) {
+        throw new Error(`Caching for '${packageManager}' is not supported`);
+    }
+    const platform = process.env.RUNNER_OS;
+    const arch = external_os_default().arch();
+    const cachePaths = await getCacheDirectories(packageManagerInfo, cacheDependencyPath);
+    core.saveState(State.CachePaths, cachePaths);
+    const lockFilePath = cacheDependencyPath
+        ? cacheDependencyPath
+        : findLockFile(packageManagerInfo);
+    const fileHash = await glob.hashFiles(lockFilePath);
+    if (!fileHash) {
+        throw new Error('Some specified paths were not resolved, unable to cache dependencies.');
+    }
+    const keyPrefix = `node-cache-${platform}-${arch}-${packageManager}`;
+    const primaryKey = `${keyPrefix}-${fileHash}`;
+    core.debug(`primary key is ${primaryKey}`);
+    core.saveState(State.CachePrimaryKey, primaryKey);
+    const isManagedByYarnBerry = await repoHasYarnBerryManagedDependencies(packageManagerInfo, cacheDependencyPath);
+    let cacheKey;
+    if (isManagedByYarnBerry) {
+        core.info('All dependencies are managed locally by yarn3, the previous cache can be used');
+        cacheKey = await cache.restoreCache(cachePaths, primaryKey, [keyPrefix]);
+    }
+    else {
+        cacheKey = await cache.restoreCache(cachePaths, primaryKey);
+    }
+    core.setOutput('cache-hit', Boolean(cacheKey));
+    if (!cacheKey) {
+        core.info(`${packageManager} cache is not found`);
+        return;
+    }
+    core.saveState(State.CacheMatchedKey, cacheKey);
+    core.info(`Cache restored from key: ${cacheKey}`);
+};
+const findLockFile = (packageManager) => {
+    const lockFiles = packageManager.lockFilePatterns;
+    const workspace = process.env.GITHUB_WORKSPACE;
+    const rootContent = external_fs_default().readdirSync(workspace);
+    const lockFile = lockFiles.find(item => rootContent.includes(item));
+    if (!lockFile) {
+        throw new Error(`Dependencies lock file is not found in ${workspace}. Supported file patterns: ${lockFiles.toString()}`);
+    }
+    return external_path_default().join(workspace, lockFile);
+};
+
+// EXTERNAL MODULE: ./node_modules/@actions/tool-cache/lib/tool-cache.js
+var tool_cache = __nccwpck_require__(33472);
+// EXTERNAL MODULE: ./node_modules/semver/index.js
+var semver = __nccwpck_require__(62088);
+var semver_default = /*#__PURE__*/__nccwpck_require__.n(semver);
+// EXTERNAL MODULE: ./node_modules/@actions/http-client/lib/index.js
+var lib = __nccwpck_require__(54844);
+// EXTERNAL MODULE: external "assert"
+var external_assert_ = __nccwpck_require__(42613);
+;// CONCATENATED MODULE: ./src/distributions/base-distribution.ts
+
+
+
+
+
+
+
+
+
+class BaseDistribution {
+    nodeInfo;
+    httpClient;
+    osPlat = external_os_default().platform();
+    constructor(nodeInfo) {
+        this.nodeInfo = nodeInfo;
+        this.httpClient = new lib.HttpClient('setup-node', [], {
+            allowRetries: true,
+            maxRetries: 3
+        });
+    }
+    async setupNodeJs() {
+        let nodeJsVersions;
+        if (this.nodeInfo.checkLatest) {
+            const evaluatedVersion = await this.findVersionInDist(nodeJsVersions);
+            this.nodeInfo.versionSpec = evaluatedVersion;
+        }
+        let toolPath = this.findVersionInHostedToolCacheDirectory();
+        if (toolPath) {
+            core.info(`Found in cache @ ${toolPath}`);
+        }
+        else {
+            const evaluatedVersion = await this.findVersionInDist(nodeJsVersions);
+            const toolName = this.getNodejsDistInfo(evaluatedVersion);
+            toolPath = await this.downloadNodejs(toolName);
+        }
+        if (this.osPlat != 'win32') {
+            toolPath = external_path_.join(toolPath, 'bin');
+        }
+        core.addPath(toolPath);
+    }
+    async findVersionInDist(nodeJsVersions) {
+        if (!nodeJsVersions) {
+            nodeJsVersions = await this.getNodeJsVersions();
+        }
+        const versions = this.filterVersions(nodeJsVersions);
+        const evaluatedVersion = this.evaluateVersions(versions);
+        if (!evaluatedVersion) {
+            throw new Error(`Unable to find Node version '${this.nodeInfo.versionSpec}' for platform ${this.osPlat} and architecture ${this.nodeInfo.arch}.`);
+        }
+        return evaluatedVersion;
+    }
+    evaluateVersions(versions) {
+        let version = '';
+        const { range, options } = this.validRange(this.nodeInfo.versionSpec);
+        core.debug(`evaluating ${versions.length} versions`);
+        for (const potential of versions) {
+            const satisfied = semver_default().satisfies(potential, range, options);
+            if (satisfied) {
+                version = potential;
+                break;
+            }
+        }
+        if (version) {
+            core.debug(`matched: ${version}`);
+        }
+        else {
+            core.debug('match not found');
+        }
+        return version;
+    }
+    findVersionInHostedToolCacheDirectory() {
+        return tool_cache.find('node', this.nodeInfo.versionSpec, this.translateArchToDistUrl(this.nodeInfo.arch));
+    }
+    async getNodeJsVersions() {
+        const initialUrl = this.getDistributionUrl(this.nodeInfo.mirror);
+        const dataUrl = `${initialUrl}/index.json`;
+        const headers = {};
+        if (this.nodeInfo.mirrorToken) {
+            headers['Authorization'] = this.nodeInfo.mirrorToken;
+        }
+        const response = await this.httpClient.getJson(dataUrl, headers);
+        return response.result || [];
+    }
+    getNodejsDistInfo(version) {
+        const osArch = this.translateArchToDistUrl(this.nodeInfo.arch);
+        version = semver_default().clean(version) || '';
+        const fileName = this.osPlat == 'win32'
+            ? `node-v${version}-win-${osArch}`
+            : `node-v${version}-${this.osPlat}-${osArch}`;
+        const urlFileName = this.osPlat == 'win32'
+            ? this.nodeInfo.arch === 'arm64'
+                ? `${fileName}.zip`
+                : `${fileName}.7z`
+            : `${fileName}.tar.gz`;
+        const initialUrl = this.getDistributionUrl(this.nodeInfo.mirror);
+        const url = `${initialUrl}/v${version}/${urlFileName}`;
+        return {
+            downloadUrl: url,
+            resolvedVersion: version,
+            arch: osArch,
+            fileName: fileName
+        };
+    }
+    async downloadNodejs(info) {
+        let downloadPath = '';
+        core.info(`Acquiring ${info.resolvedVersion} - ${info.arch} from ${info.downloadUrl}`);
+        try {
+            downloadPath = await tool_cache.downloadTool(info.downloadUrl, undefined, this.nodeInfo.mirrorToken);
+        }
+        catch (err) {
+            if (err instanceof tool_cache.HTTPError &&
+                err.httpStatusCode == 404 &&
+                this.osPlat == 'win32') {
+                return await this.acquireWindowsNodeFromFallbackLocation(info.resolvedVersion, info.arch);
+            }
+            throw err;
+        }
+        const toolPath = await this.extractArchive(downloadPath, info, true);
+        core.info('Done');
+        return toolPath;
+    }
+    validRange(versionSpec) {
+        let options;
+        const c = semver_default().clean(versionSpec) || '';
+        const valid = semver_default().valid(c) ?? versionSpec;
+        return { range: valid, options };
+    }
+    async acquireWindowsNodeFromFallbackLocation(version, arch = external_os_default().arch()) {
+        const initialUrl = this.getDistributionUrl(this.nodeInfo.mirror);
+        const osArch = this.translateArchToDistUrl(arch);
+        // Create temporary folder to download to
+        const tempDownloadFolder = `temp_${crypto.randomUUID()}`;
+        const tempDirectory = process.env['RUNNER_TEMP'] || '';
+        external_assert_.ok(tempDirectory, 'Expected RUNNER_TEMP to be defined');
+        const tempDir = external_path_.join(tempDirectory, tempDownloadFolder);
+        await io.mkdirP(tempDir);
+        let exeUrl;
+        let libUrl;
+        try {
+            exeUrl = `${initialUrl}/v${version}/win-${osArch}/node.exe`;
+            libUrl = `${initialUrl}/v${version}/win-${osArch}/node.lib`;
+            core.info(`Downloading only node binary from ${exeUrl}`);
+            const exePath = await tool_cache.downloadTool(exeUrl, undefined, this.nodeInfo.mirrorToken);
+            await io.cp(exePath, external_path_.join(tempDir, 'node.exe'));
+            const libPath = await tool_cache.downloadTool(libUrl, undefined, this.nodeInfo.mirrorToken);
+            await io.cp(libPath, external_path_.join(tempDir, 'node.lib'));
+        }
+        catch (err) {
+            if (err instanceof tool_cache.HTTPError && err.httpStatusCode == 404) {
+                exeUrl = `${initialUrl}/v${version}/node.exe`;
+                libUrl = `${initialUrl}/v${version}/node.lib`;
+                const exePath = await tool_cache.downloadTool(exeUrl, undefined, this.nodeInfo.mirrorToken);
+                await io.cp(exePath, external_path_.join(tempDir, 'node.exe'));
+                const libPath = await tool_cache.downloadTool(libUrl, undefined, this.nodeInfo.mirrorToken);
+                await io.cp(libPath, external_path_.join(tempDir, 'node.lib'));
+            }
+            else {
+                throw err;
+            }
+        }
+        const toolPath = await tool_cache.cacheDir(tempDir, 'node', version, arch);
+        return toolPath;
+    }
+    async extractArchive(downloadPath, info, isOfficialArchive) {
+        //
+        // Extract
+        //
+        core.info('Extracting ...');
+        let extPath;
+        info = info || {}; // satisfy compiler, never null when reaches here
+        if (this.osPlat == 'win32') {
+            const extension = this.nodeInfo.arch === 'arm64' ? '.zip' : '.7z';
+            // Rename archive to add extension because after downloading
+            // archive does not contain extension type and it leads to some issues
+            // on Windows runners without PowerShell Core.
+            //
+            // For default PowerShell Windows it should contain extension type to unpack it.
+            if (extension === '.zip' && isOfficialArchive) {
+                const renamedArchive = `${downloadPath}.zip`;
+                external_fs_default().renameSync(downloadPath, renamedArchive);
+                extPath = await tool_cache.extractZip(renamedArchive);
+            }
+            else {
+                const _7zPath = __nccwpck_require__.ab + "7zr.exe";
+                extPath = await tool_cache.extract7z(downloadPath, undefined, __nccwpck_require__.ab + "7zr.exe");
+            }
+            // 7z extracts to folder matching file name
+            const nestedPath = external_path_.join(extPath, external_path_.basename(info.fileName, extension));
+            if (external_fs_default().existsSync(nestedPath)) {
+                extPath = nestedPath;
+            }
+        }
+        else {
+            extPath = await tool_cache.extractTar(downloadPath, undefined, [
+                'xz',
+                '--strip',
+                '1'
+            ]);
+        }
+        //
+        // Install into the local tool cache - node extracts with a root folder that matches the fileName downloaded
+        //
+        core.info('Adding to the cache ...');
+        const toolPath = await tool_cache.cacheDir(extPath, 'node', info.resolvedVersion, info.arch);
+        return toolPath;
+    }
+    getDistFileName() {
+        const osArch = this.translateArchToDistUrl(this.nodeInfo.arch);
+        // node offers a json list of versions
+        let dataFileName;
+        switch (this.osPlat) {
+            case 'linux':
+                dataFileName = `linux-${osArch}`;
+                break;
+            case 'darwin':
+                dataFileName = `osx-${osArch}-tar`;
+                break;
+            case 'win32':
+                if (this.nodeInfo.arch === 'arm64') {
+                    dataFileName = `win-${osArch}-zip`;
+                }
+                else {
+                    dataFileName = `win-${osArch}-exe`;
+                }
+                break;
+            default:
+                throw new Error(`Unexpected OS '${this.osPlat}'`);
+        }
+        return dataFileName;
+    }
+    filterVersions(nodeJsVersions) {
+        const versions = [];
+        const dataFileName = this.getDistFileName();
+        nodeJsVersions.forEach((nodeVersion) => {
+            // ensure this version supports your os and platform
+            if (nodeVersion.files.indexOf(dataFileName) >= 0) {
+                versions.push(nodeVersion.version);
+            }
+        });
+        return versions.sort((semver_default()).rcompare);
+    }
+    translateArchToDistUrl(arch) {
+        switch (arch) {
+            case 'arm':
+                return 'armv7l';
+            default:
+                return arch;
+        }
+    }
+}
+
+;// CONCATENATED MODULE: ./src/distributions/base-distribution-prerelease.ts
+
+
+
+class BasePrereleaseNodejs extends BaseDistribution {
+    constructor(nodeInfo) {
+        super(nodeInfo);
+    }
+    findVersionInHostedToolCacheDirectory() {
+        let toolPath = '';
+        const localVersionPaths = tool_cache.findAllVersions('node', this.nodeInfo.arch)
+            .filter(i => {
+            const prerelease = semver_default().prerelease(i, {});
+            if (!prerelease) {
+                return false;
+            }
+            return prerelease[0].toString().includes(this.distribution);
+        });
+        localVersionPaths.sort((semver_default()).rcompare);
+        const localVersion = this.evaluateVersions(localVersionPaths);
+        if (localVersion) {
+            toolPath = tool_cache.find('node', localVersion, this.nodeInfo.arch);
+        }
+        return toolPath;
+    }
+    validRange(versionSpec) {
+        let range;
+        const [raw, prerelease] = this.splitVersionSpec(versionSpec);
+        const isValidVersion = semver_default().valid(raw);
+        const rawVersion = (isValidVersion ? raw : semver_default().coerce(raw));
+        if (prerelease !== this.distribution) {
+            range = versionSpec;
+        }
+        else {
+            range = `${semver_default().validRange(`^${rawVersion}-${this.distribution}`)}-0`;
+        }
+        return { range, options: { includePrerelease: !isValidVersion } };
+    }
+    splitVersionSpec(versionSpec) {
+        return versionSpec.split(/-(.*)/s);
+    }
+}
+
+;// CONCATENATED MODULE: ./src/distributions/nightly/nightly_builds.ts
+
+class NightlyNodejs extends BasePrereleaseNodejs {
+    distribution = 'nightly';
+    constructor(nodeInfo) {
+        super(nodeInfo);
+    }
+    getDistributionUrl(mirror) {
+        const url = mirror || 'https://nodejs.org';
+        return `${url}/download/nightly`;
+    }
+}
+
+;// CONCATENATED MODULE: ./src/distributions/official_builds/official_builds.ts
+
+
+
+
+class OfficialBuilds extends BaseDistribution {
+    constructor(nodeInfo) {
+        super(nodeInfo);
+    }
+    async setupNodeJs() {
+        let manifest;
+        let nodeJsVersions;
+        const osArch = this.translateArchToDistUrl(this.nodeInfo.arch);
+        if (this.isLtsAlias(this.nodeInfo.versionSpec)) {
+            core.info('Attempt to resolve LTS alias from manifest...');
+            // No try-catch since it's not possible to resolve LTS alias without manifest
+            manifest = await this.getManifest();
+            this.nodeInfo.versionSpec = this.resolveLtsAliasFromManifest(this.nodeInfo.versionSpec, this.nodeInfo.stable, manifest);
+        }
+        if (this.isLatestSyntax(this.nodeInfo.versionSpec)) {
+            nodeJsVersions = await this.getNodeJsVersions();
+            const versions = this.filterVersions(nodeJsVersions);
+            this.nodeInfo.versionSpec = this.evaluateVersions(versions);
+            core.info('getting latest node version...');
+        }
+        if (this.nodeInfo.checkLatest) {
+            core.info('Attempt to resolve the latest version from manifest...');
+            const resolvedVersion = await this.resolveVersionFromManifest(this.nodeInfo.versionSpec, this.nodeInfo.stable, osArch, manifest);
+            if (resolvedVersion) {
+                this.nodeInfo.versionSpec = resolvedVersion;
+                core.info(`Resolved as '${resolvedVersion}'`);
+            }
+            else {
+                core.info(`Failed to resolve version ${this.nodeInfo.versionSpec} from manifest`);
+            }
+        }
+        let toolPath = this.findVersionInHostedToolCacheDirectory();
+        if (toolPath) {
+            core.info(`Found in cache @ ${toolPath}`);
+            this.addToolPath(toolPath);
+            return;
+        }
+        let downloadPath = '';
+        try {
+            core.info(`Attempting to download ${this.nodeInfo.versionSpec}...`);
+            const versionInfo = await this.getInfoFromManifest(this.nodeInfo.versionSpec, this.nodeInfo.stable, osArch, manifest);
+            if (versionInfo) {
+                core.info(`Acquiring ${versionInfo.resolvedVersion} - ${versionInfo.arch} from ${versionInfo.downloadUrl}`);
+                downloadPath = await tool_cache.downloadTool(versionInfo.downloadUrl, undefined, this.nodeInfo.mirror ? this.nodeInfo.mirrorToken : this.nodeInfo.auth);
+                if (downloadPath) {
+                    toolPath = await this.extractArchive(downloadPath, versionInfo, false);
+                }
+            }
+            else {
+                core.info(`Not found in manifest. Falling back to download directly from ${this.nodeInfo.mirror || 'Node'}`);
+            }
+        }
+        catch (err) {
+            // Rate limit?
+            if (err instanceof tool_cache.HTTPError &&
+                (err.httpStatusCode === 403 || err.httpStatusCode === 429)) {
+                core.info(`Received HTTP status code ${err.httpStatusCode}. This usually indicates the rate limit has been exceeded`);
+            }
+            else {
+                core.info(err.message);
+            }
+            core.debug(err.stack ?? 'empty stack');
+            core.info('Falling back to download directly from Node');
+        }
+        if (!toolPath) {
+            toolPath = await this.downloadDirectlyFromNode();
+        }
+        if (this.osPlat != 'win32') {
+            toolPath = external_path_default().join(toolPath, 'bin');
+        }
+        core.addPath(toolPath);
+    }
+    addToolPath(toolPath) {
+        if (this.osPlat != 'win32') {
+            toolPath = external_path_default().join(toolPath, 'bin');
+        }
+        core.addPath(toolPath);
+    }
+    async downloadDirectlyFromNode() {
+        const nodeJsVersions = await this.getNodeJsVersions();
+        const versions = this.filterVersions(nodeJsVersions);
+        const evaluatedVersion = this.evaluateVersions(versions);
+        if (!evaluatedVersion) {
+            throw new Error(`Unable to find Node version '${this.nodeInfo.versionSpec}' for platform ${this.osPlat} and architecture ${this.nodeInfo.arch}.`);
+        }
+        const toolName = this.getNodejsDistInfo(evaluatedVersion);
+        try {
+            const toolPath = await this.downloadNodejs(toolName);
+            return toolPath;
+        }
+        catch (error) {
+            if (error instanceof tool_cache.HTTPError && error.httpStatusCode === 404) {
+                core.warning(`Node version ${this.nodeInfo.versionSpec} for platform ${this.osPlat} and architecture ${this.nodeInfo.arch} was found but failed to download. ` +
+                    'This usually happens when downloadable binaries are not fully updated at https://nodejs.org/. ' +
+                    'To resolve this issue you may either fall back to the older version or try again later.');
+            }
+            throw error;
+        }
+    }
+    evaluateVersions(versions) {
+        let version = '';
+        if (this.isLatestSyntax(this.nodeInfo.versionSpec)) {
+            core.info(`getting latest node version...`);
+            return versions[0];
+        }
+        version = super.evaluateVersions(versions);
+        return version;
+    }
+    getDistributionUrl(mirror) {
+        const url = mirror || 'https://nodejs.org';
+        return `${url}/dist`;
+    }
+    getManifest() {
+        core.debug('Getting manifest from actions/node-versions@main');
+        return tool_cache.getManifestFromRepo('actions', 'node-versions', this.nodeInfo.mirror ? this.nodeInfo.mirrorToken : this.nodeInfo.auth, 'main');
+    }
+    resolveLtsAliasFromManifest(versionSpec, stable, manifest) {
+        const alias = versionSpec.split('lts/')[1]?.toLowerCase();
+        if (!alias) {
+            throw new Error(`Unable to parse LTS alias for Node version '${versionSpec}'`);
+        }
+        core.debug(`LTS alias '${alias}' for Node version '${versionSpec}'`);
+        // Supported formats are `lts/<alias>`, `lts/*`, and `lts/-n`. Where asterisk means highest possible LTS and -n means the nth-highest.
+        const n = Number(alias);
+        const aliases = Object.fromEntries(manifest
+            .filter(x => x.lts && x.stable === stable)
+            .map(x => [x.lts.toLowerCase(), x])
+            .reverse());
+        const numbered = Object.values(aliases);
+        const release = alias === '*'
+            ? numbered[numbered.length - 1]
+            : n < 0
+                ? numbered[numbered.length - 1 + n]
+                : aliases[alias];
+        if (!release) {
+            throw new Error(`Unable to find LTS release '${alias}' for Node version '${versionSpec}'.`);
+        }
+        core.debug(`Found LTS release '${release.version}' for Node version '${versionSpec}'`);
+        return release.version.split('.')[0];
+    }
+    async resolveVersionFromManifest(versionSpec, stable, osArch, manifest) {
+        try {
+            const info = await this.getInfoFromManifest(versionSpec, stable, osArch, manifest);
+            return info?.resolvedVersion;
+        }
+        catch (err) {
+            core.info('Unable to resolve version from manifest...');
+            core.debug(err.message);
+        }
+    }
+    async getInfoFromManifest(versionSpec, stable, osArch, manifest) {
+        let info = null;
+        if (!manifest) {
+            core.debug('No manifest cached');
+            manifest = await this.getManifest();
+        }
+        const rel = await tool_cache.findFromManifest(versionSpec, stable, manifest, osArch);
+        if (rel && rel.files.length > 0) {
+            info = {};
+            info.resolvedVersion = rel.version;
+            info.arch = rel.files[0].arch;
+            info.downloadUrl = rel.files[0].download_url;
+            info.fileName = rel.files[0].filename;
+        }
+        return info;
+    }
+    isLtsAlias(versionSpec) {
+        return versionSpec.startsWith('lts/');
+    }
+    isLatestSyntax(versionSpec) {
+        return ['current', 'latest', 'node'].includes(versionSpec);
+    }
+}
+
+;// CONCATENATED MODULE: ./src/distributions/rc/rc_builds.ts
+
+class RcBuild extends BaseDistribution {
+    constructor(nodeInfo) {
+        super(nodeInfo);
+    }
+    getDistributionUrl(mirror) {
+        const url = mirror || 'https://nodejs.org';
+        return `${url}/download/rc`;
+    }
+}
+
+;// CONCATENATED MODULE: ./src/distributions/v8-canary/canary_builds.ts
+
+class CanaryBuild extends BasePrereleaseNodejs {
+    distribution = 'v8-canary';
+    constructor(nodeInfo) {
+        super(nodeInfo);
+    }
+    getDistributionUrl(mirror) {
+        const url = mirror || 'https://nodejs.org';
+        return `${url}/download/v8-canary`;
+    }
+}
+
+;// CONCATENATED MODULE: ./src/distributions/installer-factory.ts
+
+
+
+
+var Distributions;
+(function (Distributions) {
+    Distributions["DEFAULT"] = "";
+    Distributions["CANARY"] = "v8-canary";
+    Distributions["NIGHTLY"] = "nightly";
+    Distributions["RC"] = "rc";
+})(Distributions || (Distributions = {}));
+function getNodejsDistribution(installerOptions) {
+    const versionSpec = installerOptions.versionSpec;
+    let distribution;
+    if (versionSpec.includes(Distributions.NIGHTLY)) {
+        distribution = new NightlyNodejs(installerOptions);
+    }
+    else if (versionSpec.includes(Distributions.CANARY)) {
+        distribution = new CanaryBuild(installerOptions);
+    }
+    else if (versionSpec.includes(Distributions.RC)) {
+        distribution = new RcBuild(installerOptions);
+    }
+    else {
+        distribution = new OfficialBuilds(installerOptions);
+    }
+    return distribution;
+}
+
+;// CONCATENATED MODULE: ./src/main.ts
+
+
+
+
+
+
+
+
+
+
+async function run() {
+    try {
+        //
+        // Version is optional.  If supplied, install / use from the tool cache
+        // If not supplied then task is still used to setup proxy, auth, etc...
+        //
+        const version = resolveVersionInput();
+        let arch = core.getInput('architecture');
+        const cache = core.getInput('cache');
+        const packagemanagercache = (core.getInput('package-manager-cache') || 'true').toUpperCase() ===
+            'TRUE';
+        // if architecture supplied but node-version is not
+        // if we don't throw a warning, the already installed x64 node will be used which is not probably what user meant.
+        if (arch && !version) {
+            core.warning('`architecture` is provided but `node-version` is missing. In this configuration, the version/architecture of Node will not be changed. To fix this, provide `architecture` in combination with `node-version`');
+        }
+        if (!arch) {
+            arch = external_os_default().arch();
+        }
+        if (version) {
+            const token = core.getInput('token');
+            const auth = !token ? undefined : `token ${token}`;
+            const mirror = core.getInput('mirror');
+            const mirrorToken = core.getInput('mirror-token');
+            const stable = (core.getInput('stable') || 'true').toUpperCase() === 'TRUE';
+            const checkLatest = (core.getInput('check-latest') || 'false').toUpperCase() === 'TRUE';
+            const nodejsInfo = {
+                versionSpec: version,
+                checkLatest,
+                auth,
+                stable,
+                arch,
+                mirror,
+                mirrorToken
+            };
+            const nodeDistribution = getNodejsDistribution(nodejsInfo);
+            await nodeDistribution.setupNodeJs();
+        }
+        await printEnvDetailsAndSetOutput();
+        const registryUrl = core.getInput('registry-url');
+        if (registryUrl) {
+            configAuthentication(registryUrl);
+        }
+        const cacheDependencyPath = core.getInput('cache-dependency-path');
+        if (isCacheFeatureAvailable()) {
+            // if the cache input is provided, use it for caching.
+            if (cache) {
+                core.saveState(State.CachePackageManager, cache);
+                await restoreCache(cache, cacheDependencyPath);
+                // package manager npm is detected from package.json, enable auto-caching for npm.
+            }
+            else if (packagemanagercache) {
+                const resolvedPackageManager = getNameFromPackageManagerField();
+                if (resolvedPackageManager) {
+                    core.info("Detected npm as the package manager from package.json's packageManager field. " +
+                        'Auto caching has been enabled for npm. If you want to disable it, set package-manager-cache input to false');
+                    core.saveState(State.CachePackageManager, resolvedPackageManager);
+                    await restoreCache(resolvedPackageManager, cacheDependencyPath);
+                }
+            }
+        }
+        const matchersPath = external_path_.join(__dirname, '../..', '.github');
+        core.info(`##[add-matcher]${external_path_.join(matchersPath, 'tsc.json')}`);
+        core.info(`##[add-matcher]${external_path_.join(matchersPath, 'eslint-stylish.json')}`);
+        core.info(`##[add-matcher]${external_path_.join(matchersPath, 'eslint-compact.json')}`);
+    }
+    catch (err) {
+        core.setFailed(err.message);
+    }
+}
+function resolveVersionInput() {
+    let version = core.getInput('node-version');
+    const versionFileInput = core.getInput('node-version-file');
+    if (version && versionFileInput) {
+        core.warning('Both node-version and node-version-file inputs are specified, only node-version will be used');
+    }
+    if (version) {
+        return version;
+    }
+    if (versionFileInput) {
+        const versionFilePath = external_path_.join(process.env.GITHUB_WORKSPACE, versionFileInput);
+        const parsedVersion = getNodeVersionFromFile(versionFilePath);
+        if (parsedVersion) {
+            version = parsedVersion;
+        }
+        else {
+            core.warning(`Could not determine node version from ${versionFilePath}. Falling back`);
+        }
+        core.info(`Resolved ${versionFileInput} as ${version}`);
+    }
+    return version;
+}
+function getNameFromPackageManagerField() {
+    const npmRegex = /^(\^)?npm(@.*)?$/; // matches "npm", "npm@...", "^npm@..."
+    try {
+        const packageJson = JSON.parse(external_fs_default().readFileSync(external_path_.join(process.env.GITHUB_WORKSPACE, 'package.json'), 'utf-8'));
+        // Check devEngines.packageManager first (object or array)
+        const devPM = packageJson?.devEngines?.packageManager;
+        const devPMArray = devPM ? (Array.isArray(devPM) ? devPM : [devPM]) : [];
+        for (const obj of devPMArray) {
+            if (typeof obj?.name === 'string' && npmRegex.test(obj.name)) {
+                return 'npm';
+            }
+        }
+        // Check top-level packageManager
+        const topLevelPM = packageJson?.packageManager;
+        if (typeof topLevelPM === 'string' && npmRegex.test(topLevelPM)) {
+            return 'npm';
+        }
+        return undefined;
+    }
+    catch {
+        return undefined;
+    }
+}
+
+;// CONCATENATED MODULE: ./src/setup-node.ts
+
+run();
 
 })();
 

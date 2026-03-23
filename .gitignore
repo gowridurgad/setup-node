@@ -108,3 +108,4 @@ __tests__/data/yarn/**
 
 !__tests__/data/yarn/package.json
 !__tests__/data/yarn/yarn.lock
+node_modules
