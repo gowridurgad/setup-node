@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as core from '@actions/core';
-import * as github from '@actions/github';
+import {Context} from '@actions/github/lib/context';
 
 export function configAuthentication(registryUrl: string) {
   const npmrc: string = path.resolve(
@@ -19,7 +19,7 @@ export function configAuthentication(registryUrl: string) {
 function writeRegistryToFile(registryUrl: string, fileLocation: string) {
   let scope: string = core.getInput('scope');
   if (!scope && registryUrl.indexOf('npm.pkg.github.com') > -1) {
-    scope = github.context.repo.owner;
+    scope = new Context().repo.owner;
   }
   if (scope && scope[0] != '@') {
     scope = '@' + scope;
