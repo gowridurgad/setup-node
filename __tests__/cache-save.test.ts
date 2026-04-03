@@ -4,9 +4,9 @@ import * as glob from '@actions/glob';
 import fs from 'fs';
 import path from 'path';
 
-import * as utils from '../src/cache-utils';
-import {run} from '../src/cache-save';
-import {State} from '../src/constants';
+import * as utils from '../src/cache-utils.js';
+import {run} from '../src/cache-save.js';
+import {State} from '../src/constants.js';
 
 describe('run', () => {
   const yarnFileHash =

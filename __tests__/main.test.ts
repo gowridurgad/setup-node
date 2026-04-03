@@ -10,9 +10,9 @@ import osm from 'os';
 
 import each from 'jest-each';
 
-import * as main from '../src/main';
-import * as util from '../src/util';
-import OfficialBuilds from '../src/distributions/official_builds/official_builds';
+import * as main from '../src/main.js';
+import * as util from '../src/util.js';
+import OfficialBuilds from '../src/distributions/official_builds/official_builds.js';
 
 describe('main tests', () => {
   let inputs = {} as any;

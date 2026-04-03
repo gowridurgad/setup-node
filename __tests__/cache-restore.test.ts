@@ -4,8 +4,8 @@ import * as path from 'path';
 import * as glob from '@actions/glob';
 import osm from 'os';
 
-import * as utils from '../src/cache-utils';
-import {restoreCache} from '../src/cache-restore';
+import * as utils from '../src/cache-utils.js';
+import {restoreCache} from '../src/cache-restore.js';
 
 describe('cache-restore', () => {
   const packageManagers = ['yarn', 'npm', 'pnpm'] as const;

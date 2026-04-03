@@ -8,10 +8,10 @@ import fs from 'fs';
 import cp from 'child_process';
 import osm from 'os';
 import path from 'path';
-import * as main from '../src/main';
-import * as auth from '../src/authutil';
-import OfficialBuilds from '../src/distributions/official_builds/official_builds';
-import {INodeVersion} from '../src/distributions/base-models';
+import * as main from '../src/main.js';
+import * as auth from '../src/authutil.js';
+import OfficialBuilds from '../src/distributions/official_builds/official_builds.js';
+import {INodeVersion} from '../src/distributions/base-models.js';
 
 import nodeTestManifest from './data/versions-manifest.json';
 import nodeTestDist from './data/node-dist-index.json';
