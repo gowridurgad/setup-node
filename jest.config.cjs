@@ -44,6 +44,7 @@ module.exports = {
     '^@actions/io$': '<rootDir>/node_modules/@actions/io/lib/io.js',
     '^@actions/io/(.*)$': '<rootDir>/node_modules/@actions/io/$1',
     '^@actions/tool-cache$': '<rootDir>/node_modules/@actions/tool-cache/lib/tool-cache.js',
+    '(.*)/dirname\\.js$': '<rootDir>/__tests__/helpers/dirname-mock.cjs',
     '^(\\.{1,2}/.*)\\.js$': '$1'
   },
   verbose: true

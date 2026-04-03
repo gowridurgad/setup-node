@@ -92993,7 +92993,18 @@ function _unique(values) {
     return Array.from(new Set(values));
 }
 //# sourceMappingURL=tool-cache.js.map
+;// CONCATENATED MODULE: ./src/dirname.ts
+
+
+/**
+ * ESM-compatible __dirname replacement.
+ * In the ncc ESM bundle, import.meta.url provides the file URL.
+ * In CJS (ts-jest), this module is mocked to return __dirname.
+ */
+const currentDirname = (0,external_path_.dirname)((0,external_url_.fileURLToPath)(import.meta.url));
+
 ;// CONCATENATED MODULE: ./src/distributions/base-distribution.ts
+
 
 
 
@@ -93177,8 +93188,8 @@ class BaseDistribution {
                 extPath = await extractZip(renamedArchive);
             }
             else {
-                const _7zPath = __nccwpck_require__.ab + "7zr.exe";
-                extPath = await extract7z(downloadPath, undefined, __nccwpck_require__.ab + "7zr.exe");
+                const _7zPath = external_path_.join(currentDirname, '../..', 'externals', '7zr.exe');
+                extPath = await extract7z(downloadPath, undefined, _7zPath);
             }
             // 7z extracts to folder matching file name
             const nestedPath = external_path_.join(extPath, external_path_.basename(info.fileName, extension));
@@ -93546,6 +93557,7 @@ function getNodejsDistribution(installerOptions) {
 
 
 
+
 async function run() {
     try {
         //
@@ -93607,7 +93619,7 @@ async function run() {
                 }
             }
         }
-        const matchersPath = external_path_.join(__dirname, '../..', '.github');
+        const matchersPath = external_path_.join(currentDirname, '../..', '.github');
         core_info(`##[add-matcher]${external_path_.join(matchersPath, 'tsc.json')}`);
         core_info(`##[add-matcher]${external_path_.join(matchersPath, 'eslint-stylish.json')}`);
         core_info(`##[add-matcher]${external_path_.join(matchersPath, 'eslint-compact.json')}`);
