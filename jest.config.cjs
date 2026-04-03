@@ -18,7 +18,7 @@ module.exports = {
         }
       }
     ],
-    'node_modules/.+\\.js$': [
+    'node_modules[/\\\\].+\\.js$': [
       'ts-jest',
       {
         tsconfig: {
@@ -31,7 +31,7 @@ module.exports = {
     ]
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(@actions|@octokit|@azure|@typespec|universal-user-agent|before-after-hook|undici|json-with-bigint|fast-xml-parser|fast-xml-builder|strnum|path-expression-matcher)/)'
+    'node_modules[/\\\\](?!(@actions|@octokit|@azure|@typespec|universal-user-agent|before-after-hook|undici|json-with-bigint|fast-xml-parser|fast-xml-builder|strnum|path-expression-matcher)[/\\\\])'
   ],
   moduleNameMapper: {
     '^@actions/cache$': '<rootDir>/node_modules/@actions/cache/lib/cache.js',
