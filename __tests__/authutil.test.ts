@@ -3,8 +3,8 @@ import fs from 'fs';
 import * as path from 'path';
 import * as core from '@actions/core';
 import * as io from '@actions/io';
-import * as auth from '../src/authutil';
-import * as cacheUtils from '../src/cache-utils';
+import * as auth from '../src/authutil.js';
+import * as cacheUtils from '../src/cache-utils.js';
 
 let rcFile: string;
 
