@@ -1,19 +1,28 @@
+import {
+  jest,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  beforeEach,
+  afterAll
+} from '@jest/globals';
+import {fileURLToPath} from 'url';
 import os from 'os';
 import fs from 'fs';
 import * as path from 'path';
-import * as core from '@actions/core';
 import * as io from '@actions/io';
-import * as auth from '../src/authutil';
-import * as cacheUtils from '../src/cache-utils';
+import * as auth from '../src/authutil.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let rcFile: string;
 
 describe('authutil tests', () => {
   const _runnerDir = path.join(__dirname, 'runner');
 
-  let cnSpy: jest.SpyInstance;
-  let logSpy: jest.SpyInstance;
-  let dbgSpy: jest.SpyInstance;
+  let cnSpy: jest.SpiedFunction<typeof process.stdout.write>;
+  let logSpy: jest.SpiedFunction<typeof console.log>;
 
   beforeAll(async () => {
     const randPath = path.join(Math.random().toString(36).substring(7));
@@ -37,19 +46,8 @@ describe('authutil tests', () => {
     // writes
     cnSpy = jest.spyOn(process.stdout, 'write');
     logSpy = jest.spyOn(console, 'log');
-    dbgSpy = jest.spyOn(core, 'debug');
-    cnSpy.mockImplementation(line => {
-      // uncomment to debug
-      // process.stderr.write('write:' + line + '\n');
-    });
-    logSpy.mockImplementation(line => {
-      // uncomment to debug
-      // process.stderr.write('log:' + line + '\n');
-    });
-    dbgSpy.mockImplementation(msg => {
-      // uncomment to see debug output
-      // process.stderr.write(msg + '\n');
-    });
+    cnSpy.mockImplementation(() => true);
+    logSpy.mockImplementation(() => {});
   }, 100000);
 
   function dbg(message: string) {
