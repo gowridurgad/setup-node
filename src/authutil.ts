@@ -39,16 +39,15 @@ function writeRegistryToFile(registryUrl: string, fileLocation: string) {
       }
     });
   }
-  // Remove http: or https: from front of registry.
-  const authString: string =
-    registryUrl.replace(/(^\w+:|^)/, '') + ':_authToken=${NODE_AUTH_TOKEN}';
   const registryString = `${scope}registry=${registryUrl}`;
-  newContents += `${authString}${os.EOL}${registryString}`;
+
+  // Only write auth line if NODE_AUTH_TOKEN is available
+  if (process.env.NODE_AUTH_TOKEN) {
+    const authString: string =
+      registryUrl.replace(/(^\w+:|^)/, '') + ':_authToken=${NODE_AUTH_TOKEN}';
+    newContents += `${authString}${os.EOL}`;
+  }
+  newContents += registryString;
   fs.writeFileSync(fileLocation, newContents);
   core.exportVariable('NPM_CONFIG_USERCONFIG', fileLocation);
-  // Export empty node_auth_token if didn't exist so npm doesn't complain about not being able to find it
-  core.exportVariable(
-    'NODE_AUTH_TOKEN',
-    process.env.NODE_AUTH_TOKEN || 'XXXXX-XXXXX-XXXXX-XXXXX'
-  );
 }

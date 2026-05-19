@@ -116,36 +116,59 @@ describe('authutil tests', () => {
     const rc = readRcFile(rcFile);
     expect(rc['@ownername:registry']).toBe('npm.pkg.github.com/');
     expect(process.env.NODE_AUTH_TOKEN).toEqual('foobar');
+    delete process.env.NODE_AUTH_TOKEN;
+  });
+
+  it('does not write auth line when NODE_AUTH_TOKEN is not set', async () => {
+    delete process.env.NODE_AUTH_TOKEN;
+    await auth.configAuthentication('https://registry.npmjs.org/');
+    const contents = fs.readFileSync(rcFile, {encoding: 'utf8'});
+    expect(contents).toBe(`registry=https://registry.npmjs.org/`);
+  });
+
+  it('does not write auth line for scoped registry when NODE_AUTH_TOKEN is not set', async () => {
+    delete process.env.NODE_AUTH_TOKEN;
+    process.env['INPUT_SCOPE'] = 'myscope';
+    await auth.configAuthentication('https://registry.npmjs.org/');
+    const contents = fs.readFileSync(rcFile, {encoding: 'utf8'});
+    expect(contents).toBe(`@myscope:registry=https://registry.npmjs.org/`);
   });
 
   it('configAuthentication should overwrite non-scoped with non-scoped', async () => {
+    process.env.NODE_AUTH_TOKEN = 'test-token';
     fs.writeFileSync(rcFile, 'registry=NNN');
     await auth.configAuthentication('https://registry.npmjs.org/');
     const contents = fs.readFileSync(rcFile, {encoding: 'utf8'});
     expect(contents).toBe(
       `//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}${os.EOL}registry=https://registry.npmjs.org/`
     );
+    delete process.env.NODE_AUTH_TOKEN;
   });
 
   it('configAuthentication should overwrite only non-scoped', async () => {
+    process.env.NODE_AUTH_TOKEN = 'test-token';
     fs.writeFileSync(rcFile, `registry=NNN${os.EOL}@myscope:registry=MMM`);
     await auth.configAuthentication('https://registry.npmjs.org/');
     const contents = fs.readFileSync(rcFile, {encoding: 'utf8'});
     expect(contents).toBe(
       `@myscope:registry=MMM${os.EOL}//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}${os.EOL}registry=https://registry.npmjs.org/`
     );
+    delete process.env.NODE_AUTH_TOKEN;
   });
 
   it('configAuthentication should add non-scoped to scoped', async () => {
+    process.env.NODE_AUTH_TOKEN = 'test-token';
     fs.writeFileSync(rcFile, '@myscope:registry=NNN');
     await auth.configAuthentication('https://registry.npmjs.org/');
     const contents = fs.readFileSync(rcFile, {encoding: 'utf8'});
     expect(contents).toBe(
       `@myscope:registry=NNN${os.EOL}//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}${os.EOL}registry=https://registry.npmjs.org/`
     );
+    delete process.env.NODE_AUTH_TOKEN;
   });
 
   it('configAuthentication should overwrite scoped with scoped', async () => {
+    process.env.NODE_AUTH_TOKEN = 'test-token';
     process.env['INPUT_SCOPE'] = 'myscope';
     fs.writeFileSync(rcFile, `@myscope:registry=NNN`);
     await auth.configAuthentication('https://registry.npmjs.org/');
@@ -153,9 +176,11 @@ describe('authutil tests', () => {
     expect(contents).toBe(
       `//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}${os.EOL}@myscope:registry=https://registry.npmjs.org/`
     );
+    delete process.env.NODE_AUTH_TOKEN;
   });
 
   it('configAuthentication should overwrite only scoped', async () => {
+    process.env.NODE_AUTH_TOKEN = 'test-token';
     process.env['INPUT_SCOPE'] = 'myscope';
     fs.writeFileSync(rcFile, `registry=NNN${os.EOL}@myscope:registry=MMM`);
     await auth.configAuthentication('https://registry.npmjs.org/');
@@ -163,9 +188,11 @@ describe('authutil tests', () => {
     expect(contents).toBe(
       `registry=NNN${os.EOL}//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}${os.EOL}@myscope:registry=https://registry.npmjs.org/`
     );
+    delete process.env.NODE_AUTH_TOKEN;
   });
 
   it('configAuthentication should add scoped to non-scoped', async () => {
+    process.env.NODE_AUTH_TOKEN = 'test-token';
     process.env['INPUT_SCOPE'] = 'myscope';
     fs.writeFileSync(rcFile, `registry=MMM`);
     await auth.configAuthentication('https://registry.npmjs.org/');
@@ -173,9 +200,11 @@ describe('authutil tests', () => {
     expect(contents).toBe(
       `registry=MMM${os.EOL}//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}${os.EOL}@myscope:registry=https://registry.npmjs.org/`
     );
+    delete process.env.NODE_AUTH_TOKEN;
   });
 
   it('configAuthentication should overwrite only one scoped', async () => {
+    process.env.NODE_AUTH_TOKEN = 'test-token';
     process.env['INPUT_SCOPE'] = 'myscope';
     fs.writeFileSync(
       rcFile,
@@ -186,9 +215,11 @@ describe('authutil tests', () => {
     expect(contents).toBe(
       `@otherscope:registry=NNN${os.EOL}//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}${os.EOL}@myscope:registry=https://registry.npmjs.org/`
     );
+    delete process.env.NODE_AUTH_TOKEN;
   });
 
   it('configAuthentication should add scoped to another scoped', async () => {
+    process.env.NODE_AUTH_TOKEN = 'test-token';
     process.env['INPUT_SCOPE'] = 'myscope';
     fs.writeFileSync(rcFile, `@otherscope:registry=MMM`);
     await auth.configAuthentication('https://registry.npmjs.org/');
@@ -196,5 +227,6 @@ describe('authutil tests', () => {
     expect(contents).toBe(
       `@otherscope:registry=MMM${os.EOL}//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}${os.EOL}@myscope:registry=https://registry.npmjs.org/`
     );
+    delete process.env.NODE_AUTH_TOKEN;
   });
 });
