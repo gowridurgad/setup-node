@@ -94,6 +94,11 @@ See [action.yml](action.yml)
     # Default: ''
     scope: ''
 
+    # Set to 'false' to skip writing the _authToken line in .npmrc.
+    # Useful for Trusted Publisher OIDC workflows where auth is handled externally.
+    # Default: 'true'
+    auth-token-line: 'true'
+
     # Optional mirror to download binaries from.
     # Artifacts need to match the official Node.js
     # Example:
@@ -250,6 +255,7 @@ If the runner is not able to access github.com, any Nodejs versions requested du
  - [Publishing to npmjs and GPR with yarn](docs/advanced-usage.md#publish-to-npmjs-and-gpr-with-yarn)
  - [Using private packages](docs/advanced-usage.md#use-private-packages)
  - [Publishing to npm with Trusted Publisher (OIDC)](docs/advanced-usage.md#publishing-to-npm-with-trusted-publisher-oidc)
+ - [Skipping auth token line](docs/advanced-usage.md#skipping-auth-token-line)
  - [Using private mirror](docs/advanced-usage.md#use-private-mirror)
 
 ## Recommended permissions
