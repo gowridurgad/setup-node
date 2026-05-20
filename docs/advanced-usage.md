@@ -514,6 +514,19 @@ You must also configure a **Trusted Publisher** in npm for your package/scope th
 
 For more details, see the [npm Trusted Publishers documentation](https://docs.npmjs.com/trusted-publishers) and the [GitHub Actions OpenID Connect (OIDC) overview](https://docs.github.com/en/actions/concepts/security/openid-connect).
 
+
+## Skipping auth token line
+
+By default, when `registry-url` is set, the action writes an `_authToken` line in `.npmrc` and exports `NODE_AUTH_TOKEN`. If you want to skip this behavior (e.g. for Trusted Publisher OIDC workflows where auth is handled externally), set `auth-token-line` to `false`. This will write only the `registry=` line to `.npmrc`.
+
+```yaml
+- uses: actions/setup-node@v6
+  with:
+    node-version: '24'
+    registry-url: 'https://registry.npmjs.org'
+    auth-token-line: 'false'
+```
+
 ## Use private mirror
 
 It is possible to use a private mirror hosting Node.js binaries. This mirror must be a full mirror of the official Node.js distribution.

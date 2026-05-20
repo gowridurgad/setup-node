@@ -33,6 +33,7 @@ describe('authutil tests', () => {
     //   fs.unlinkSync(rcFile);
     // }
     process.env['INPUT_SCOPE'] = '';
+    process.env['INPUT_AUTH-TOKEN-LINE'] = '';
 
     // writes
     cnSpy = jest.spyOn(process.stdout, 'write');
@@ -196,5 +197,27 @@ describe('authutil tests', () => {
     expect(contents).toBe(
       `@otherscope:registry=MMM${os.EOL}//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}${os.EOL}@myscope:registry=https://registry.npmjs.org/`
     );
+  });
+
+  it('does not write auth line when auth-token-line is false', async () => {
+    process.env['INPUT_AUTH-TOKEN-LINE'] = 'false';
+    await auth.configAuthentication('https://registry.npmjs.org/');
+    const contents = fs.readFileSync(rcFile, {encoding: 'utf8'});
+    expect(contents).toBe(`registry=https://registry.npmjs.org/`);
+  });
+
+  it('does not write auth line for scoped registry when auth-token-line is false', async () => {
+    process.env['INPUT_AUTH-TOKEN-LINE'] = 'false';
+    process.env['INPUT_SCOPE'] = 'myscope';
+    await auth.configAuthentication('https://registry.npmjs.org/');
+    const contents = fs.readFileSync(rcFile, {encoding: 'utf8'});
+    expect(contents).toBe(`@myscope:registry=https://registry.npmjs.org/`);
+  });
+
+  it('exports real NODE_AUTH_TOKEN when auth-token-line is true and token is set', async () => {
+    process.env.NODE_AUTH_TOKEN = 'real-token';
+    await auth.configAuthentication('https://registry.npmjs.org/');
+    expect(process.env.NODE_AUTH_TOKEN).toBe('real-token');
+    delete process.env.NODE_AUTH_TOKEN;
   });
 });
