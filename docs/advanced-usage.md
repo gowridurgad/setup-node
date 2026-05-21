@@ -514,6 +514,23 @@ You must also configure a **Trusted Publisher** in npm for your package/scope th
 
 For more details, see the [npm Trusted Publishers documentation](https://docs.npmjs.com/trusted-publishers) and the [GitHub Actions OpenID Connect (OIDC) overview](https://docs.github.com/en/actions/concepts/security/openid-connect).
 
+## Exporting dummy NODE_AUTH_TOKEN
+
+When `registry-url` is set, the action always writes the `_authToken=${NODE_AUTH_TOKEN}` line in `.npmrc`. If `NODE_AUTH_TOKEN` is not set in the environment, npm will complain about a missing variable.
+
+To avoid this, set `auth-token-line` to `true`. This will export a dummy token (`XXXXX-XXXXX-XXXXX-XXXXX`) so npm doesn't error.  By default, `auth-token-line` is `false` — no token is exported unless you provide one yourself.
+
+> **Note**: When `auth-token-line` is `true`, the dummy token is always exported. If a real `NODE_AUTH_TOKEN` is already set in the environment, it will be overwritten by the dummy. Use this input only when you do not have a token to provide.
+
+```yaml
+# Export dummy token to prevent npm warnings
+- uses: actions/setup-node@v6
+  with:
+    node-version: '24'
+    registry-url: 'https://registry.npmjs.org'
+    auth-token-line: 'true'
+
+
 ## Use private mirror
 
 It is possible to use a private mirror hosting Node.js binaries. This mirror must be a full mirror of the official Node.js distribution.

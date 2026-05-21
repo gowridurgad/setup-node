@@ -39,6 +39,10 @@ function writeRegistryToFile(registryUrl: string, fileLocation: string) {
       }
     });
   }
+
+  const exportDummyToken =
+    (core.getInput('auth-token-line') || 'false').toUpperCase() === 'TRUE';
+
   // Remove http: or https: from front of registry.
   const authString: string =
     registryUrl.replace(/(^\w+:|^)/, '') + ':_authToken=${NODE_AUTH_TOKEN}';
@@ -46,9 +50,10 @@ function writeRegistryToFile(registryUrl: string, fileLocation: string) {
   newContents += `${authString}${os.EOL}${registryString}`;
   fs.writeFileSync(fileLocation, newContents);
   core.exportVariable('NPM_CONFIG_USERCONFIG', fileLocation);
-  // Export empty node_auth_token if didn't exist so npm doesn't complain about not being able to find it
-  core.exportVariable(
-    'NODE_AUTH_TOKEN',
-    process.env.NODE_AUTH_TOKEN || 'XXXXX-XXXXX-XXXXX-XXXXX'
-  );
+  core.exportVariable('NODE_AUTH_TOKEN', process.env.NODE_AUTH_TOKEN);
+
+  if (exportDummyToken) {
+    // Export dummy token so npm doesn't complain about missing variable
+    core.exportVariable('NODE_AUTH_TOKEN', 'XXXXX-XXXXX-XXXXX-XXXXX');
+  }
 }
