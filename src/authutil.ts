@@ -51,5 +51,3 @@ function writeRegistryToFile(registryUrl: string, fileLocation: string) {
     core.exportVariable('NODE_AUTH_TOKEN', process.env.NODE_AUTH_TOKEN);
   }
 }
-
-// For testing purposes only
