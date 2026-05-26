@@ -33,7 +33,6 @@ describe('authutil tests', () => {
     //   fs.unlinkSync(rcFile);
     // }
     process.env['INPUT_SCOPE'] = '';
-    process.env.NODE_AUTH_TOKEN = 'test-token';
 
     // writes
     cnSpy = jest.spyOn(process.stdout, 'write');
@@ -123,6 +122,9 @@ describe('authutil tests', () => {
     const exportSpy = jest.spyOn(core, 'exportVariable');
     delete process.env.NODE_AUTH_TOKEN;
     await auth.configAuthentication('https://registry.npmjs.org/');
+    expect(fs.statSync(rcFile)).toBeDefined();
+    const rc = readRcFile(rcFile);
+    expect(rc['registry']).toBe('https://registry.npmjs.org/');
     expect(exportSpy).not.toHaveBeenCalledWith(
       'NODE_AUTH_TOKEN',
       expect.anything()
@@ -133,6 +135,7 @@ describe('authutil tests', () => {
     const exportSpy = jest.spyOn(core, 'exportVariable');
     process.env.NODE_AUTH_TOKEN = '';
     await auth.configAuthentication('https://registry.npmjs.org/');
+    expect(fs.statSync(rcFile)).toBeDefined();
     expect(exportSpy).toHaveBeenCalledWith('NODE_AUTH_TOKEN', '');
   });
 
