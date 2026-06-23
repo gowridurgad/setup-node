@@ -12,9 +12,38 @@ import os from 'os';
 import fs from 'fs';
 import * as path from 'path';
 import * as io from '@actions/io';
-import * as auth from '../src/authutil.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+jest.unstable_mockModule('@actions/core', () => ({
+  info: jest.fn(),
+  warning: jest.fn(),
+  debug: jest.fn(),
+  error: jest.fn(),
+  notice: jest.fn(),
+  setFailed: jest.fn(),
+  setOutput: jest.fn(),
+  getInput: jest.fn((name: string) => {
+    const val =
+      process.env[`INPUT_${name.replace(/ /g, '_').toUpperCase()}`] || '';
+    return val.trim();
+  }),
+  getBooleanInput: jest.fn(),
+  getMultilineInput: jest.fn(),
+  addPath: jest.fn(),
+  exportVariable: jest.fn(),
+  saveState: jest.fn(),
+  getState: jest.fn(),
+  setSecret: jest.fn(),
+  isDebug: jest.fn(() => false),
+  startGroup: jest.fn(),
+  endGroup: jest.fn(),
+  group: jest.fn((_name: string, fn: () => Promise<unknown>) => fn())
+}));
+
+// Dynamic imports AFTER mocking so authutil sees the mocked core.
+const core = await import('@actions/core');
+const auth = await import('../src/authutil.js');
 
 let rcFile: string;
 
@@ -117,7 +146,8 @@ describe('authutil tests', () => {
   });
 
   it('should not export NODE_AUTH_TOKEN if not set in environment', async () => {
-    const exportSpy = jest.spyOn(core, 'exportVariable');
+    const exportSpy = core.exportVariable as jest.Mock;
+    exportSpy.mockClear();
     delete process.env.NODE_AUTH_TOKEN;
     await auth.configAuthentication('https://registry.npmjs.org/');
     expect(fs.statSync(rcFile)).toBeDefined();
@@ -130,7 +160,8 @@ describe('authutil tests', () => {
   });
 
   it('should export NODE_AUTH_TOKEN if set to empty string', async () => {
-    const exportSpy = jest.spyOn(core, 'exportVariable');
+    const exportSpy = core.exportVariable as jest.Mock;
+    exportSpy.mockClear();
     process.env.NODE_AUTH_TOKEN = '';
     await auth.configAuthentication('https://registry.npmjs.org/');
     expect(fs.statSync(rcFile)).toBeDefined();
