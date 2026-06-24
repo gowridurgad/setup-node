@@ -99229,7 +99229,7 @@ class BaseDistribution {
         };
     }
     async downloadNodejs(info) {
-        let downloadPath;
+        let downloadPath = '';
         core_info(`Acquiring ${info.resolvedVersion} - ${info.arch} from ${info.downloadUrl}`);
         try {
             downloadPath = await downloadTool(info.downloadUrl, undefined, this.nodeInfo.mirrorToken);
@@ -99473,12 +99473,13 @@ class OfficialBuilds extends BaseDistribution {
             this.addToolPath(toolPath);
             return;
         }
+        let downloadPath = '';
         try {
             core_info(`Attempting to download ${this.nodeInfo.versionSpec}...`);
             const versionInfo = await this.getInfoFromManifest(this.nodeInfo.versionSpec, this.nodeInfo.stable, osArch, manifest);
             if (versionInfo) {
                 core_info(`Acquiring ${versionInfo.resolvedVersion} - ${versionInfo.arch} from ${versionInfo.downloadUrl}`);
-                const downloadPath = await downloadTool(versionInfo.downloadUrl, undefined, this.nodeInfo.mirror && this.nodeInfo.mirrorToken
+                downloadPath = await downloadTool(versionInfo.downloadUrl, undefined, this.nodeInfo.mirror && this.nodeInfo.mirrorToken
                     ? this.nodeInfo.mirrorToken
                     : this.nodeInfo.auth);
                 if (downloadPath) {
@@ -99537,11 +99538,12 @@ class OfficialBuilds extends BaseDistribution {
         }
     }
     evaluateVersions(versions) {
+        let version = '';
         if (this.isLatestSyntax(this.nodeInfo.versionSpec)) {
             core_info(`getting latest node version...`);
             return versions[0];
         }
-        const version = super.evaluateVersions(versions);
+        version = super.evaluateVersions(versions);
         return version;
     }
     getDistributionUrl(mirror) {

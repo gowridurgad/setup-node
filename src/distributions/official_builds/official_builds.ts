@@ -66,6 +66,7 @@ export default class OfficialBuilds extends BaseDistribution {
       return;
     }
 
+    let downloadPath = '';
     try {
       core.info(`Attempting to download ${this.nodeInfo.versionSpec}...`);
 
@@ -80,7 +81,7 @@ export default class OfficialBuilds extends BaseDistribution {
         core.info(
           `Acquiring ${versionInfo.resolvedVersion} - ${versionInfo.arch} from ${versionInfo.downloadUrl}`
         );
-        const downloadPath = await tc.downloadTool(
+        downloadPath = await tc.downloadTool(
           versionInfo.downloadUrl,
           undefined,
           this.nodeInfo.mirror && this.nodeInfo.mirrorToken
@@ -167,12 +168,14 @@ export default class OfficialBuilds extends BaseDistribution {
   }
 
   protected evaluateVersions(versions: string[]): string {
+    let version = '';
+
     if (this.isLatestSyntax(this.nodeInfo.versionSpec)) {
       core.info(`getting latest node version...`);
       return versions[0];
     }
 
-    const version = super.evaluateVersions(versions);
+    version = super.evaluateVersions(versions);
 
     return version;
   }

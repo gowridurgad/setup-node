@@ -136,7 +136,7 @@ export default abstract class BaseDistribution {
   }
 
   protected async downloadNodejs(info: INodeVersionInfo) {
-    let downloadPath: string;
+    let downloadPath = '';
     core.info(
       `Acquiring ${info.resolvedVersion} - ${info.arch} from ${info.downloadUrl}`
     );
