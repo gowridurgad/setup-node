@@ -99147,9 +99147,8 @@ class BaseDistribution {
         });
     }
     async setupNodeJs() {
-        let nodeJsVersions;
         if (this.nodeInfo.checkLatest) {
-            const evaluatedVersion = await this.findVersionInDist(nodeJsVersions);
+            const evaluatedVersion = await this.findVersionInDist(undefined);
             this.nodeInfo.versionSpec = evaluatedVersion;
         }
         let toolPath = this.findVersionInHostedToolCacheDirectory();
@@ -99157,7 +99156,7 @@ class BaseDistribution {
             core_info(`Found in cache @ ${toolPath}`);
         }
         else {
-            const evaluatedVersion = await this.findVersionInDist(nodeJsVersions);
+            const evaluatedVersion = await this.findVersionInDist(undefined);
             const toolName = this.getNodejsDistInfo(evaluatedVersion);
             toolPath = await this.downloadNodejs(toolName);
         }
@@ -99230,7 +99229,7 @@ class BaseDistribution {
         };
     }
     async downloadNodejs(info) {
-        let downloadPath = '';
+        let downloadPath;
         core_info(`Acquiring ${info.resolvedVersion} - ${info.arch} from ${info.downloadUrl}`);
         try {
             downloadPath = await downloadTool(info.downloadUrl, undefined, this.nodeInfo.mirrorToken);
@@ -99248,10 +99247,9 @@ class BaseDistribution {
         return toolPath;
     }
     validRange(versionSpec) {
-        let options;
         const c = semver_default().clean(versionSpec) || '';
         const valid = semver_default().valid(c) ?? versionSpec;
-        return { range: valid, options };
+        return { range: valid, options: undefined };
     }
     async acquireWindowsNodeFromFallbackLocation(version, arch = external_os_default().arch()) {
         const initialUrl = this.getDistributionUrl(this.nodeInfo.mirror);
@@ -99475,13 +99473,12 @@ class OfficialBuilds extends BaseDistribution {
             this.addToolPath(toolPath);
             return;
         }
-        let downloadPath = '';
         try {
             core_info(`Attempting to download ${this.nodeInfo.versionSpec}...`);
             const versionInfo = await this.getInfoFromManifest(this.nodeInfo.versionSpec, this.nodeInfo.stable, osArch, manifest);
             if (versionInfo) {
                 core_info(`Acquiring ${versionInfo.resolvedVersion} - ${versionInfo.arch} from ${versionInfo.downloadUrl}`);
-                downloadPath = await downloadTool(versionInfo.downloadUrl, undefined, this.nodeInfo.mirror && this.nodeInfo.mirrorToken
+                const downloadPath = await downloadTool(versionInfo.downloadUrl, undefined, this.nodeInfo.mirror && this.nodeInfo.mirrorToken
                     ? this.nodeInfo.mirrorToken
                     : this.nodeInfo.auth);
                 if (downloadPath) {
@@ -99540,12 +99537,11 @@ class OfficialBuilds extends BaseDistribution {
         }
     }
     evaluateVersions(versions) {
-        let version = '';
         if (this.isLatestSyntax(this.nodeInfo.versionSpec)) {
             core_info(`getting latest node version...`);
             return versions[0];
         }
-        version = super.evaluateVersions(versions);
+        const version = super.evaluateVersions(versions);
         return version;
     }
     getDistributionUrl(mirror) {

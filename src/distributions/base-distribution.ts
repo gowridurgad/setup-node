@@ -26,9 +26,8 @@ export default abstract class BaseDistribution {
   protected abstract getDistributionUrl(mirror: string): string;
 
   public async setupNodeJs() {
-    let nodeJsVersions: INodeVersion[] | undefined;
     if (this.nodeInfo.checkLatest) {
-      const evaluatedVersion = await this.findVersionInDist(nodeJsVersions);
+      const evaluatedVersion = await this.findVersionInDist(undefined);
       this.nodeInfo.versionSpec = evaluatedVersion;
     }
 
@@ -36,7 +35,7 @@ export default abstract class BaseDistribution {
     if (toolPath) {
       core.info(`Found in cache @ ${toolPath}`);
     } else {
-      const evaluatedVersion = await this.findVersionInDist(nodeJsVersions);
+      const evaluatedVersion = await this.findVersionInDist(undefined);
       const toolName = this.getNodejsDistInfo(evaluatedVersion);
       toolPath = await this.downloadNodejs(toolName);
     }
@@ -137,7 +136,7 @@ export default abstract class BaseDistribution {
   }
 
   protected async downloadNodejs(info: INodeVersionInfo) {
-    let downloadPath = '';
+    let downloadPath: string;
     core.info(
       `Acquiring ${info.resolvedVersion} - ${info.arch} from ${info.downloadUrl}`
     );
@@ -168,12 +167,14 @@ export default abstract class BaseDistribution {
     return toolPath;
   }
 
-  protected validRange(versionSpec: string) {
-    let options: semver.RangeOptions | undefined;
+  protected validRange(versionSpec: string): {
+    range: string;
+    options: semver.RangeOptions | undefined;
+  } {
     const c = semver.clean(versionSpec) || '';
     const valid = semver.valid(c) ?? versionSpec;
 
-    return {range: valid, options};
+    return {range: valid, options: undefined};
   }
 
   protected async acquireWindowsNodeFromFallbackLocation(
