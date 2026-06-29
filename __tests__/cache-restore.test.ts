@@ -137,6 +137,7 @@ describe('cache-restore', () => {
     ] as const)(
       'restored dependencies for %s',
       async (packageManager, toolVersion, fileHash) => {
+        const expectedCacheKey = `node-cache-${platform}-${arch}-${packageManager}-${fileHash}`;
         // Set workspace to the appropriate fixture folder
         setWorkspaceFor(packageManager);
         getCommandOutputSpy.mockImplementation((command: string) => {
@@ -150,12 +151,20 @@ describe('cache-restore', () => {
         await restoreCache(packageManager, '');
         expect(hashFilesSpy).toHaveBeenCalled();
         expect(infoSpy).toHaveBeenCalledWith(
-          `Cache restored from key: node-cache-${platform}-${arch}-${packageManager}-${fileHash}`
+          `Cache restored from key: ${expectedCacheKey}`
         );
         expect(infoSpy).not.toHaveBeenCalledWith(
           `${packageManager} cache is not found`
         );
         expect(setOutputSpy).toHaveBeenCalledWith('cache-hit', true);
+        expect(setOutputSpy).toHaveBeenCalledWith(
+          'cache-primary-key',
+          expectedCacheKey
+        );
+        expect(setOutputSpy).toHaveBeenCalledWith(
+          'cache-matched-key',
+          expectedCacheKey
+        );
       }
     );
   });
@@ -169,6 +178,7 @@ describe('cache-restore', () => {
     ] as const)(
       'dependencies are changed %s',
       async (packageManager, toolVersion, fileHash) => {
+        const expectedCacheKey = `node-cache-${platform}-${arch}-${packageManager}-${fileHash}`;
         // Set workspace to the appropriate fixture folder
         setWorkspaceFor(packageManager);
         getCommandOutputSpy.mockImplementation((command: string) => {
@@ -186,8 +196,73 @@ describe('cache-restore', () => {
           `${packageManager} cache is not found`
         );
         expect(setOutputSpy).toHaveBeenCalledWith('cache-hit', false);
+        expect(setOutputSpy).toHaveBeenCalledWith(
+          'cache-primary-key',
+          expectedCacheKey
+        );
+        expect(setOutputSpy).toHaveBeenCalledWith(
+          'cache-matched-key',
+          undefined
+        );
       }
     );
+  });
+
+  describe('Cache key output', () => {
+    const packageManager = 'npm';
+    const cacheDependencyPath = 'package-lock.json';
+    const primaryKey = `node-cache-${platform}-${arch}-${packageManager}-${npmFileHash}`;
+    const cacheKey = `node-cache-${platform}-${arch}-${packageManager}-abc123`;
+
+    beforeEach(() => {
+      getCommandOutputSpy.mockImplementation(command => {
+        if (command.includes('npm config get cache')) return npmCachePath;
+      });
+    });
+
+    it('sets the cache-primary-key output', async () => {
+      restoreCacheSpy.mockResolvedValue(cacheKey);
+      await restoreCache(packageManager, cacheDependencyPath);
+      expect(setOutputSpy).toHaveBeenCalledWith(
+        'cache-primary-key',
+        primaryKey
+      );
+    });
+
+    it('sets the cache-hit output to true when cache is found', async () => {
+      restoreCacheSpy.mockResolvedValue(cacheKey);
+      await restoreCache(packageManager, cacheDependencyPath);
+      expect(setOutputSpy).toHaveBeenCalledWith('cache-hit', true);
+    });
+
+    it('sets the cache-hit output to false when cache is not found', async () => {
+      restoreCacheSpy.mockResolvedValue(undefined);
+      await restoreCache(packageManager, cacheDependencyPath);
+
+      expect(setOutputSpy).toHaveBeenCalledWith('cache-hit', false);
+    });
+
+    it('sets the cache-matched-key output when cache is found', async () => {
+      (cache.restoreCache as jest.Mock).mockResolvedValue(cacheKey);
+
+      await restoreCache(packageManager, cacheDependencyPath);
+
+      expect(core.setOutput).toHaveBeenCalledWith(
+        'cache-matched-key',
+        cacheKey
+      );
+    });
+
+    it('sets the cache-matched-key output to undefined when cache is not found', async () => {
+      (cache.restoreCache as jest.Mock).mockResolvedValue(undefined);
+
+      await restoreCache(packageManager, cacheDependencyPath);
+
+      expect(core.setOutput).toHaveBeenCalledWith(
+        'cache-matched-key',
+        undefined
+      );
+    });
   });
 
   afterEach(() => {
