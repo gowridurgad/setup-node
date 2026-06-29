@@ -45,7 +45,7 @@ export const restoreCache = async (
   core.debug(`primary key is ${primaryKey}`);
 
   core.saveState(State.CachePrimaryKey, primaryKey);
-  core.setOutput('cache-key', primaryKey);
+  core.setOutput('cache-primary-key', primaryKey);
 
   const isManagedByYarnBerry = await repoHasYarnBerryManagedDependencies(
     packageManagerInfo,

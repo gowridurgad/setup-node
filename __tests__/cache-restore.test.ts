@@ -158,7 +158,7 @@ describe('cache-restore', () => {
         );
         expect(setOutputSpy).toHaveBeenCalledWith('cache-hit', true);
         expect(setOutputSpy).toHaveBeenCalledWith(
-          'cache-key',
+          'cache-primary-key',
           expectedCacheKey
         );
         expect(setOutputSpy).toHaveBeenCalledWith(
@@ -197,7 +197,7 @@ describe('cache-restore', () => {
         );
         expect(setOutputSpy).toHaveBeenCalledWith('cache-hit', false);
         expect(setOutputSpy).toHaveBeenCalledWith(
-          'cache-key',
+          'cache-primary-key',
           expectedCacheKey
         );
         expect(setOutputSpy).toHaveBeenCalledWith(
@@ -220,10 +220,13 @@ describe('cache-restore', () => {
       });
     });
 
-    it('sets the cache-key output', async () => {
+    it('sets the cache-primary-key output', async () => {
       restoreCacheSpy.mockResolvedValue(cacheKey);
       await restoreCache(packageManager, cacheDependencyPath);
-      expect(setOutputSpy).toHaveBeenCalledWith('cache-key', primaryKey);
+      expect(setOutputSpy).toHaveBeenCalledWith(
+        'cache-primary-key',
+        primaryKey
+      );
     });
 
     it('sets the cache-hit output to true when cache is found', async () => {
@@ -241,19 +244,13 @@ describe('cache-restore', () => {
     it('sets the cache-matched-key output when cache is found', async () => {
       restoreCacheSpy.mockResolvedValue(cacheKey);
       await restoreCache(packageManager, cacheDependencyPath);
-      expect(setOutputSpy).toHaveBeenCalledWith(
-        'cache-matched-key',
-        cacheKey
-      );
+      expect(setOutputSpy).toHaveBeenCalledWith('cache-matched-key', cacheKey);
     });
 
     it('sets the cache-matched-key output to undefined when cache is not found', async () => {
       restoreCacheSpy.mockResolvedValue(undefined);
       await restoreCache(packageManager, cacheDependencyPath);
-      expect(setOutputSpy).toHaveBeenCalledWith(
-        'cache-matched-key',
-        undefined
-      );
+      expect(setOutputSpy).toHaveBeenCalledWith('cache-matched-key', undefined);
     });
   });
 

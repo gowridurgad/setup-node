@@ -231,7 +231,10 @@ describe('run', () => {
       expect(infoSpy).toHaveBeenLastCalledWith(
         `Cache saved with the key: ${npmFileHash}`
       );
-      expect(core.setOutput).toHaveBeenCalledWith('cache-key', npmFileHash);
+      expect(core.setOutput).toHaveBeenCalledWith(
+        'cache-primary-key',
+        npmFileHash
+      );
       expect(setFailedSpy).not.toHaveBeenCalled();
     });
 
@@ -262,7 +265,10 @@ describe('run', () => {
       expect(infoSpy).toHaveBeenLastCalledWith(
         `Cache saved with the key: ${npmFileHash}`
       );
-      expect(core.setOutput).toHaveBeenCalledWith('cache-key', npmFileHash);
+      expect(core.setOutput).toHaveBeenCalledWith(
+        'cache-primary-key',
+        npmFileHash
+      );
       expect(setFailedSpy).not.toHaveBeenCalled();
     });
 
@@ -293,7 +299,10 @@ describe('run', () => {
       expect(infoSpy).toHaveBeenLastCalledWith(
         `Cache saved with the key: ${yarnFileHash}`
       );
-      expect(core.setOutput).toHaveBeenCalledWith('cache-key', yarnFileHash);
+      expect(core.setOutput).toHaveBeenCalledWith(
+        'cache-primary-key',
+        yarnFileHash
+      );
       expect(setFailedSpy).not.toHaveBeenCalled();
     });
 
@@ -324,7 +333,10 @@ describe('run', () => {
       expect(infoSpy).toHaveBeenLastCalledWith(
         `Cache saved with the key: ${pnpmFileHash}`
       );
-      expect(core.setOutput).toHaveBeenCalledWith('cache-key', pnpmFileHash);
+      expect(core.setOutput).toHaveBeenCalledWith(
+        'cache-primary-key',
+        pnpmFileHash
+      );
       expect(setFailedSpy).not.toHaveBeenCalled();
     });
 

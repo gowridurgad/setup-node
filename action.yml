@@ -34,7 +34,7 @@ inputs:
 outputs:
   cache-hit:
     description: 'A boolean value to indicate if a cache was hit.'
-  cache-key:
+  cache-primary-key:
     description: 'The key used for the cache.'
   cache-matched-key:
     description: 'The key used for the cache that resulted in a cache hit.'
