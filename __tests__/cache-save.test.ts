@@ -297,9 +297,9 @@ describe('run', () => {
         key === State.CachePackageManager
           ? inputs['cache']
           : key === State.CacheMatchedKey
-            ? 'no-match'
+            ? pnpmFileHash
             : key === State.CachePrimaryKey
-              ? pnpmFileHash
+              ? npmFileHash
               : key === State.CachePaths
                 ? '["/foo/bar"]'
                 : 'not expected'
@@ -316,7 +316,7 @@ describe('run', () => {
       );
       expect(saveCacheSpy).toHaveBeenCalled();
       expect(infoSpy).toHaveBeenLastCalledWith(
-        `Cache saved with the key: ${pnpmFileHash}`
+        `Cache saved with the key: ${npmFileHash}`
       );
       expect(setFailedSpy).not.toHaveBeenCalled();
     });
