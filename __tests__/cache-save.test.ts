@@ -27,7 +27,6 @@ describe('run', () => {
   let setFailedSpy: jest.SpyInstance;
   let getStateSpy: jest.SpyInstance;
   let saveCacheSpy: jest.SpyInstance;
-  let setOutputSpy: jest.SpyInstance;
   let getCommandOutputSpy: jest.SpyInstance;
   let hashFilesSpy: jest.SpyInstance;
   let existsSpy: jest.SpyInstance;
@@ -53,8 +52,6 @@ describe('run', () => {
     // cache
     saveCacheSpy = jest.spyOn(cache, 'saveCache');
     saveCacheSpy.mockImplementation(() => undefined);
-
-    setOutputSpy = jest.spyOn(core, 'setOutput');
 
     // glob
     hashFilesSpy = jest.spyOn(glob, 'hashFiles');
@@ -231,10 +228,6 @@ describe('run', () => {
       expect(infoSpy).toHaveBeenLastCalledWith(
         `Cache saved with the key: ${npmFileHash}`
       );
-      expect(core.setOutput).toHaveBeenCalledWith(
-        'cache-primary-key',
-        npmFileHash
-      );
       expect(setFailedSpy).not.toHaveBeenCalled();
     });
 
@@ -264,10 +257,6 @@ describe('run', () => {
       expect(saveCacheSpy).toHaveBeenCalled();
       expect(infoSpy).toHaveBeenLastCalledWith(
         `Cache saved with the key: ${npmFileHash}`
-      );
-      expect(core.setOutput).toHaveBeenCalledWith(
-        'cache-primary-key',
-        npmFileHash
       );
       expect(setFailedSpy).not.toHaveBeenCalled();
     });
@@ -299,10 +288,6 @@ describe('run', () => {
       expect(infoSpy).toHaveBeenLastCalledWith(
         `Cache saved with the key: ${yarnFileHash}`
       );
-      expect(core.setOutput).toHaveBeenCalledWith(
-        'cache-primary-key',
-        yarnFileHash
-      );
       expect(setFailedSpy).not.toHaveBeenCalled();
     });
 
@@ -332,10 +317,6 @@ describe('run', () => {
       expect(saveCacheSpy).toHaveBeenCalled();
       expect(infoSpy).toHaveBeenLastCalledWith(
         `Cache saved with the key: ${pnpmFileHash}`
-      );
-      expect(core.setOutput).toHaveBeenCalledWith(
-        'cache-primary-key',
-        pnpmFileHash
       );
       expect(setFailedSpy).not.toHaveBeenCalled();
     });

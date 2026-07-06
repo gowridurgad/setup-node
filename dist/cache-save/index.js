@@ -46621,7 +46621,6 @@ const cachePackages = async (packageManager) => {
         return;
     }
     core.info(`Cache saved with the key: ${primaryKey}`);
-    core.setOutput('cache-primary-key', primaryKey);
 };
 run(true);
 
