@@ -16,9 +16,9 @@ This action provides the following functionality for GitHub Actions users:
 
 - Migrated action internals to ESM for compatibility with latest `@actions/*` packages. No changes to action inputs, outputs, or behavior.
 
-### Breaking changes
+### Breaking change
 
-- The dummy `NODE_AUTH_TOKEN` fallback (`XXXXX-XXXXX-XXXXX-XXXXX`) has been removed. With this change, if `registry-url` is configured without `NODE_AUTH_TOKEN`, older or end-of-life package manager versions that relied on the placeholder behavior, including Yarn Classic (1.x) and older npm versions, may fail, while pnpm may surface a warning instead of silently masking the missing token. OIDC-based publishing flows are not affected by this change.
+- The dummy `NODE_AUTH_TOKEN` fallback has been removed, as it could unintentionally affect the generated `.npmrc` with a non-functional token. With this change, if `registry-url` is set without `NODE_AUTH_TOKEN`, end-of-life package managers such as Yarn Classic (1.x) and older npm versions may fail, and pnpm may warn. OIDC-based publishing is unaffected.
 
 ## Breaking changes in V6
 
