@@ -12,9 +12,13 @@ This action provides the following functionality for GitHub Actions users:
 - Registering problem matchers for error output
 - Configuring authentication for GPR or npm
 
-## Breaking changes in V7
+## What's new in V7
 
-- **Migrated to ESM** to enable support for the latest `@actions/*` package versions.
+- Migrated action internals to ESM for compatibility with latest `@actions/*` packages. No changes to action inputs, outputs, or behavior.
+
+### Breaking changes
+
+- The dummy `NODE_AUTH_TOKEN` fallback (`XXXXX-XXXXX-XXXXX-XXXXX`) has been removed. With this change, if `registry-url` is configured without `NODE_AUTH_TOKEN`, older or end-of-life package manager versions that relied on the placeholder behavior, including Yarn Classic (1.x) and older npm versions, may fail, while pnpm may surface a warning instead of silently masking the missing token. OIDC-based publishing flows are not affected by this change.
 
 ## Breaking changes in V6
 
