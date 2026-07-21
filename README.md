@@ -34,7 +34,7 @@ This action provides the following functionality for GitHub Actions users:
 - Upgraded action from node20 to node24.
   > Make sure your runner is on version v2.327.1 or later to ensure compatibility with this release. [See Release Notes](https://github.com/actions/runner/releases/tag/v2.327.1)
 
-For more details, see the full release notes on the [releases page](https://github.com/actions/setup-node/releases/v5.0.0)
+For more details, see the full release notes on the [releases page](https://github.com/actions/setup-node/releases)
 
 ## Usage
 
