@@ -18,7 +18,7 @@ This action provides the following functionality for GitHub Actions users:
 
 ### Breaking change
 
-- The dummy `NODE_AUTH_TOKEN` fallback has been removed, as it could unintentionally affect the generated `.npmrc` with a non-functional token. With this change, if `registry-url` is set without `NODE_AUTH_TOKEN`, end-of-life package managers such as Yarn Classic (1.x) and older npm versions may fail, and pnpm may warn. OIDC-based publishing is unaffected.
+- The dummy `NODE_AUTH_TOKEN` fallback has been removed, as it could unintentionally affect the generated `.npmrc` with a non-functional token. With this change, if `registry-url` is set without `NODE_AUTH_TOKEN`, end-of-life package managers such as Yarn Classic (1.x) and older npm versions may fail, and pnpm may warn. OIDC-based publishing flows are not affected, because they use Trusted Publishing for authentication instead of relying on `NODE_AUTH_TOKEN`.
 
 ## Breaking changes in V6
 
